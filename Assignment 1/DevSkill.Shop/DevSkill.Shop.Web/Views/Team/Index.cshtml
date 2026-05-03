@@ -1,0 +1,28 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model List<DevSkill.Shop.Web.Models.TeamListModel>
+
+@{
+    ViewData["Title"] = "Team";
+}
+
+<div class="container my-5">
+    <h2 class="text-center mb-4">Our Team</h2>
+
+    <div class="row">
+        @foreach (var member in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card text-center shadow">
+                    <img src="@member.ImageUrl" class="card-img-top" alt="Member">
+                    <div class="card-body">
+                        <h5 class="card-title">@member.Name</h5>
+                        <p class="card-text">@member.Designation</p>
+                        <p>Email: @member.Email</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
