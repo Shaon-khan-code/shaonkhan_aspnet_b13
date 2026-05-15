@@ -1,5 +1,6 @@
 using DevSkill.Shop.Web.Models;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 using System.Diagnostics;
 
 namespace DevSkill.Shop.Web.Controllers
@@ -8,6 +9,7 @@ namespace DevSkill.Shop.Web.Controllers
     {
         public IActionResult Index()
         {
+            Log.Information("Home page accessed");
             return View();
         }
 
