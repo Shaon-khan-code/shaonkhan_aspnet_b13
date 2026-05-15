@@ -1,3 +1,5 @@
 <Solution>
-  <Project Path="DevSkill.Shop.Web/DevSkill.Shop.Web.csproj" Id="2ebae748-4493-4e03-9396-5d669fa2a6cc" />
+  <Folder Name="/src/">
+    <Project Path="DevSkill.Shop.Web/DevSkill.Shop.Web.csproj" Id="2ebae748-4493-4e03-9396-5d669fa2a6cc" />
+  </Folder>
 </Solution>
