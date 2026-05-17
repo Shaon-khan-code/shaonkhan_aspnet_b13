@@ -1,40 +1,31 @@
-﻿using DevSkill.Shop.Web.Models;
+﻿using DevSkill.Shop.Application.Interfaces;
+using DevSkill.Shop.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
-namespace DevSkill.Shop.Web.Controllers
-{
-    public class TeamController : Controller
-    {
-        public IActionResult Index()
-        {
-            var teamMembers = new List<TeamListModel>
-            {
-                new TeamListModel
-                {
-                    Name = "Sohel ",
-                    Designation = "Software Engineer",
-                    Email = "sohel@example.com",
-                    ImageUrl = "https://via.placeholder.com/300"
-                },
-                new TeamListModel
-                {
-                    Name = "Shaon Khan",
-                    Designation = "Project Manager",
-                    Email = "shaon@example.com",
-                    ImageUrl = "https://via.placeholder.com/300"
-                },
-                new TeamListModel
-                {
-                    Name = "Sakib ",
-                    Designation = "UI/UX Designer",
-                    Email = "sakib@example.com",
-                    ImageUrl = "https://via.placeholder.com/300"
-                }
-            };
+namespace DevSkill.Shop.Web.Controllers;
 
-            return View(teamMembers);
-        }
+public class TeamController : Controller
+{
+    private readonly IApplicationUnitOfWork _unitOfWork;
+
+    public TeamController(IApplicationUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
     }
 
-}
+    public IActionResult Insert()
+    {
+        var team = new Team
+        {
+            Name = "Shaon Khan",
+            Designation = "Software Engineer",
+            ImageUrl = "/images/team1.jpg"
+        };
 
+        _unitOfWork.Teams.Add(team);
+
+        _unitOfWork.Save();
+
+        return Content("Team Inserted Successfully");
+    }
+}
