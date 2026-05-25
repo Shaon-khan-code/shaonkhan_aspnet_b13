@@ -1,6 +1,5 @@
 using JsonFormattingAssignment;
 using JsonFormattingAssignmentTest.TestCase1;
-using System.Net;
 
 namespace JsonFormattingAssignmentTest
 {
@@ -60,11 +59,11 @@ namespace JsonFormattingAssignmentTest
             _course.Tests.Add(admissionTest1);
             _course.Tests.Add(admissionTest2);
 
-            
+
         }
 
         [Test]
-        [TestCase("{\"Title\":\"Asp.net\",\"Supervisor\":null,\"Teacher\":{\"Name\":\"Jalaluddin\",\"Email\":null,\"PresentAddress\":{\"Street\":\"101\",\"City\":\"Dhaka\",\"Country\":\"Bangladesh\"},\"PermanentAddress\":{\"Street\":\"102\",\"City\":\"Rangpur\",\"Country\":\"Bangladesh\"},\"PhoneNumbers\":null},\"Topics\":null,\"Fees\":30000,\"Tests\":[{\"StartDateTime\":\"10/3/2022 9:09:09 AM\",\"EndDateTime\":\"10/3/2022 11:11:11 AM\",\"TestFees\":100},{\"StartDateTime\":\"11/3/2022 9:09:09 AM\",\"EndDateTime\":\"11/3/2022 10:10:10 AM\",\"TestFees\":150}],\"Tags\":[\"C#\",\"HTML\",\"CSS\"],\"StartDate\":\"12/1/2022 12:00:00 AM\"}")]
+        [TestCase("{\"Id\":null,\"Title\":\"Asp.net\",\"Supervisor\":null,\"Teacher\":{\"Name\":\"Jalaluddin\",\"Email\":null,\"PresentAddress\":{\"Street\":\"101\",\"City\":\"Dhaka\",\"Country\":\"Bangladesh\"},\"PermanentAddress\":{\"Street\":\"102\",\"City\":\"Rangpur\",\"Country\":\"Bangladesh\"},\"PhoneNumbers\":null},\"Topics\":null,\"Fees\":30000,\"Tests\":[{\"StartDateTime\":\"10/3/2022 9:09:09 AM\",\"EndDateTime\":\"10/3/2022 11:11:11 AM\",\"TestFees\":100},{\"StartDateTime\":\"11/3/2022 9:09:09 AM\",\"EndDateTime\":\"11/3/2022 10:10:10 AM\",\"TestFees\":150}],\"Tags\":[\"C#\",\"HTML\",\"CSS\"],\"StartDate\":\"12/1/2022 12:00:00 AM\"}")]
         public void Test1(string expectedResult)
         {
             string formattedString = JsonFormatter.Convert(_course);
