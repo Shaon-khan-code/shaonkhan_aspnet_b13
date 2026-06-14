@@ -29,7 +29,7 @@ namespace JsonFormattingAssignment
             }
             if (type == typeof(DateTime))
             {
-                return $"\"{((DateTime)obj).ToString("o", CultureInfo.InvariantCulture)}\""; // ISO 8601 format
+                return $"\"{((DateTime)obj).ToString("M/d/yyyy h:mm:ss tt", CultureInfo.InvariantCulture)}\"";
             }
             if (type.IsPrimitive || type == typeof(decimal) || type == typeof(double))
             {
