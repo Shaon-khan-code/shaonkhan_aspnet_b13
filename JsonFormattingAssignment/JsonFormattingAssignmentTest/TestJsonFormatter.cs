@@ -1,5 +1,6 @@
 using JsonFormattingAssignment;
 using JsonFormattingAssignmentTest.TestCase1;
+using System.Net;
 
 namespace JsonFormattingAssignmentTest
 {
@@ -59,7 +60,7 @@ namespace JsonFormattingAssignmentTest
             _course.Tests.Add(admissionTest1);
             _course.Tests.Add(admissionTest2);
 
-
+            
         }
 
         [Test]

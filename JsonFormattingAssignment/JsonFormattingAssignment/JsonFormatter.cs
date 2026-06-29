@@ -18,25 +18,32 @@ namespace JsonFormattingAssignment
 
             Type type = obj.GetType();
 
-            // Handle primitive types
+            // Handle string and char
             if (type == typeof(string) || type == typeof(char))
             {
                 return $"\"{obj.ToString().Replace("\"", "\\\"")}\"";
             }
+
+            // Handle bool
             if (type == typeof(bool))
             {
                 return (bool)obj ? "true" : "false";
             }
+
+            // Handle DateTime — match format: "10/3/2022 9:09:09 AM"
             if (type == typeof(DateTime))
             {
                 return $"\"{((DateTime)obj).ToString("M/d/yyyy h:mm:ss tt", CultureInfo.InvariantCulture)}\"";
             }
-            if (type.IsPrimitive || type == typeof(decimal) || type == typeof(double))
+
+            // Handle numeric primitives
+            if (type == typeof(int) || type == typeof(long) || type == typeof(short) ||
+                type == typeof(float) || type == typeof(double) || type == typeof(decimal))
             {
                 return System.Convert.ToString(obj, CultureInfo.InvariantCulture);
             }
 
-            // Handle arrays and lists
+            // Handle arrays and lists (IEnumerable, but not string)
             if (typeof(IEnumerable).IsAssignableFrom(type))
             {
                 var items = new List<string>();
@@ -47,7 +54,7 @@ namespace JsonFormattingAssignment
                 return "[" + string.Join(",", items) + "]";
             }
 
-            // Handle complex objects
+            // Handle complex/nested objects using reflection
             var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
             var sb = new StringBuilder();
             sb.Append("{");
@@ -64,6 +71,5 @@ namespace JsonFormattingAssignment
             sb.Append("}");
             return sb.ToString();
         }
-
     }
 }
