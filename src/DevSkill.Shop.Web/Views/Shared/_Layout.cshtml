@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - EShop Admin</title>
+    <title>@ViewData["Title"] - DevSkill.Shop Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <style>
@@ -85,7 +85,7 @@
 <body>
 
     <div class="sidebar">
-        <div class="brand"><i class="bi bi-shop"></i> EShop Admin</div>
+        <div class="brand"><i class="bi bi-shop"></i> DevSkill.Shop Admin</div>
         <nav class="nav flex-column mt-2">
             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")"
                asp-controller="Home" asp-action="Index">
