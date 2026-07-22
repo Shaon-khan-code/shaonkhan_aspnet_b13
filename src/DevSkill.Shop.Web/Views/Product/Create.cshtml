@@ -1,0 +1,74 @@
+﻿@model Product
+@{
+    ViewData["Title"] = "Add Product";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-semibold"><i class="bi bi-plus-circle me-2"></i>New Product</h6>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger small" style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Name" class="form-label fw-semibold"></label>
+                            <input asp-for="Name" class="form-control" placeholder="Product name" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CategoryId" class="form-label fw-semibold">Category</label>
+                            <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select">
+                                <option value="">-- Select Category --</option>
+                            </select>
+                            <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Price" class="form-label fw-semibold"></label>
+                            <div class="input-group">
+                                <span class="input-group-text">৳</span>
+                                <input asp-for="Price" class="form-control" placeholder="0.00" />
+                            </div>
+                            <span asp-validation-for="Price" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Brand" class="form-label fw-semibold"></label>
+                            <input asp-for="Brand" class="form-control" placeholder="Brand name" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Sku" class="form-label fw-semibold">SKU</label>
+                            <input asp-for="Sku" class="form-control" placeholder="e.g. SKU-001" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Color" class="form-label fw-semibold"></label>
+                            <input asp-for="Color" class="form-control" placeholder="e.g. Red" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Weight" class="form-label fw-semibold">Weight (kg)</label>
+                            <input asp-for="Weight" class="form-control" placeholder="0.0" />
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <div class="form-check form-switch">
+                                <input asp-for="IsActive" class="form-check-input" type="checkbox" checked />
+                                <label asp-for="IsActive" class="form-check-label fw-semibold">Active</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>Save Product
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-lg me-1"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,27 +1,32 @@
-using DevSkill.Shop.Web.Models;
+using DevSkill.Shop.Application.Services;
 using Microsoft.AspNetCore.Mvc;
-using Serilog;
-using System.Diagnostics;
 
 namespace DevSkill.Shop.Web.Controllers
 {
     public class HomeController : Controller
     {
-        public IActionResult Index()
+        private readonly ICategoryService _categoryService;
+        private readonly IProductService _productService;
+        private readonly IStockService _stockService;
+
+        public HomeController(ICategoryService cat, IProductService prod, IStockService stock)
         {
-            Log.Information("Home page accessed");
-            return View();
+            _categoryService = cat;
+            _productService = prod;
+            _stockService = stock;
         }
 
-        public IActionResult Privacy()
+        public async Task<IActionResult> Index()
         {
-            return View();
-        }
+            var cats = await _categoryService.GetPagedCategoriesAsync(1, 1000, null, null, null);
+            var prods = await _productService.GetPagedProductsAsync(1, 1000, null, null, null);
+            var stocks = await _stockService.GetPagedStocksAsync(1, 1000, null, null, null);
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            ViewBag.CategoryCount = cats.Total;
+            ViewBag.ProductCount = prods.Total;
+            ViewBag.StockCount = stocks.Total;
+            ViewBag.LowStockCount = stocks.Data.Count(s => s.IsLowStock);
+            return View();
         }
     }
 }

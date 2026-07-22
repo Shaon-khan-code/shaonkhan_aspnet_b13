@@ -1,8 +1,98 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card shadow-sm h-100" style="border-left: 4px solid #6366f1;">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center"
+                     style="width:52px;height:52px;background:#ede9fe;">
+                    <i class="bi bi-tags fs-4" style="color:#6366f1;"></i>
+                </div>
+                <div>
+                    <div class="fs-2 fw-bold">@ViewBag.CategoryCount</div>
+                    <div class="text-muted small">Categories</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card shadow-sm h-100" style="border-left: 4px solid #22c55e;">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center"
+                     style="width:52px;height:52px;background:#dcfce7;">
+                    <i class="bi bi-box-seam fs-4" style="color:#22c55e;"></i>
+                </div>
+                <div>
+                    <div class="fs-2 fw-bold">@ViewBag.ProductCount</div>
+                    <div class="text-muted small">Products</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card shadow-sm h-100" style="border-left: 4px solid #3b82f6;">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center"
+                     style="width:52px;height:52px;background:#dbeafe;">
+                    <i class="bi bi-layers fs-4" style="color:#3b82f6;"></i>
+                </div>
+                <div>
+                    <div class="fs-2 fw-bold">@ViewBag.StockCount</div>
+                    <div class="text-muted small">Stock Entries</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card shadow-sm h-100" style="border-left: 4px solid #f59e0b;">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center"
+                     style="width:52px;height:52px;background:#fef3c7;">
+                    <i class="bi bi-exclamation-triangle fs-4" style="color:#f59e0b;"></i>
+                </div>
+                <div>
+                    <div class="fs-2 fw-bold">@ViewBag.LowStock</div>
+                    <div class="text-muted small">Low Stock Alerts</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <a asp-controller="Category" asp-action="Index" class="text-decoration-none">
+            <div class="card shadow-sm h-100 hover-shadow">
+                <div class="card-body text-center py-4">
+                    <i class="bi bi-tags display-5 text-primary mb-3 d-block"></i>
+                    <h5>Manage Categories</h5>
+                    <p class="text-muted small mb-0">Add, edit, or remove product categories</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a asp-controller="Product" asp-action="Index" class="text-decoration-none">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center py-4">
+                    <i class="bi bi-box-seam display-5 text-success mb-3 d-block"></i>
+                    <h5>Manage Products</h5>
+                    <p class="text-muted small mb-0">Add, edit, or remove products</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a asp-controller="Stock" asp-action="Index" class="text-decoration-none">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center py-4">
+                    <i class="bi bi-layers display-5 text-info mb-3 d-block"></i>
+                    <h5>Manage Stock</h5>
+                    <p class="text-muted small mb-0">Monitor and update stock levels</p>
+                </div>
+            </div>
+        </a>
+    </div>
 </div>

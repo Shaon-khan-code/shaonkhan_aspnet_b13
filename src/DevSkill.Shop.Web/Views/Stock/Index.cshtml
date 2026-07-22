@@ -1,0 +1,153 @@
+﻿@model IEnumerable<Stock>
+@{
+    ViewData["Title"] = "Stock";
+    string sortOrder = ViewBag.SortOrder == "asc" ? "desc" : "asc";
+    string search = ViewBag.Search ?? "";
+    int page = ViewBag.Page;
+    int totalPages = ViewBag.TotalPages;
+    int totalCount = ViewBag.TotalCount;
+    int pageSize = ViewBag.PageSize;
+
+    string SortIcon(string col) => ViewBag.SortColumn == col
+        ? (ViewBag.SortOrder == "asc" ? "↑" : "↓") : "↕";
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-layers me-2"></i>Stock List</h6>
+        <a asp-action="Create" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Add Stock Entry
+        </a>
+    </div>
+    <div class="card-body">
+
+        <form method="get" asp-action="Index" class="row g-2 mb-3">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" value="@search" class="form-control" placeholder="Search by product…" />
+                    <button class="btn btn-outline-secondary" type="submit">Search</button>
+                    @if (!string.IsNullOrEmpty(search))
+                    {
+                        <a asp-action="Index" class="btn btn-outline-danger">Clear</a>
+                    }
+                </div>
+            </div>
+            <div class="col-auto ms-auto">
+                <select name="pageSize" class="form-select form-select-sm" onchange="this.form.submit()">
+                    @foreach (var s in new[] { 5, 10, 25, 50 })
+                    {
+                        <option value="@s" selected="@(pageSize == s)">@s per page</option>
+                    }
+                </select>
+            </div>
+            <input type="hidden" name="sortColumn" value="@ViewBag.SortColumn" />
+            <input type="hidden" name="sortOrder" value="@ViewBag.SortOrder" />
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>
+                            <a asp-action="Index" asp-route-sortColumn="Id"
+                               asp-route-sortOrder="@(ViewBag.SortColumn == "Id" ? sortOrder : "asc")"
+                               asp-route-search="@search" asp-route-pageSize="@pageSize">#</a> @SortIcon("Id")
+                        </th>
+                        <th>
+                            <a asp-action="Index" asp-route-sortColumn="Product"
+                               asp-route-sortOrder="@(ViewBag.SortColumn == "Product" ? sortOrder : "asc")"
+                               asp-route-search="@search" asp-route-pageSize="@pageSize">Product</a> @SortIcon("Product")
+                        </th>
+                        <th>
+                            <a asp-action="Index" asp-route-sortColumn="Quantity"
+                               asp-route-sortOrder="@(ViewBag.SortColumn == "Quantity" ? sortOrder : "asc")"
+                               asp-route-search="@search" asp-route-pageSize="@pageSize">Quantity</a> @SortIcon("Quantity")
+                        </th>
+                        <th>
+                            <a asp-action="Index" asp-route-sortColumn="LowStockQuantity"
+                               asp-route-sortOrder="@(ViewBag.SortColumn == "LowStockQuantity" ? sortOrder : "asc")"
+                               asp-route-search="@search" asp-route-pageSize="@pageSize">Low Stock Threshold</a> @SortIcon("LowStockQuantity")
+                        </th>
+                        <th>Alert</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="6" class="text-center text-muted py-4">No stock entries found.</td></tr>
+                    }
+                    @foreach (var s in Model)
+                    {
+                        bool isLow = s.Quantity <= s.LowStockQuantity;
+                        <tr class="@(isLow ? "table-warning" : "")">
+                            <td class="text-muted small">@s.Id</td>
+                            <td class="fw-semibold">@s.Product?.Name</td>
+                            <td>
+                                <span class="badge @(isLow ? "bg-danger" : "bg-success") fs-6">
+                                    @s.Quantity
+                                </span>
+                            </td>
+                            <td>@s.LowStockQuantity</td>
+                            <td>
+                                @if (isLow)
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>Low Stock
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success-subtle text-success">OK</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@s.Id"
+                                   class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger"
+                                        onclick="confirmDelete(@s.Id, '@(s.Product?.Name ?? "this entry")', '@Url.Action("Delete", "Stock", new { id = s.Id })')">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between mt-3">
+            <small class="text-muted">
+                Showing @((page - 1) * pageSize + 1)–@(Math.Min(page * pageSize, totalCount)) of @totalCount entries
+            </small>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(page <= 1 ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-page="@(page - 1)" asp-route-search="@search"
+                           asp-route-sortColumn="@ViewBag.SortColumn" asp-route-sortOrder="@ViewBag.SortOrder"
+                           asp-route-pageSize="@pageSize">‹</a>
+                    </li>
+                    @for (int i = Math.Max(1, page - 2); i <= Math.Min(totalPages, page + 2); i++)
+                    {
+                        <li class="page-item @(i == page ? "active" : "")">
+                            <a class="page-link" asp-action="Index"
+                               asp-route-page="@i" asp-route-search="@search"
+                               asp-route-sortColumn="@ViewBag.SortColumn" asp-route-sortOrder="@ViewBag.SortOrder"
+                               asp-route-pageSize="@pageSize">@i</a>
+                        </li>
+                    }
+                    <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-page="@(page + 1)" asp-route-search="@search"
+                           asp-route-sortColumn="@ViewBag.SortColumn" asp-route-sortOrder="@ViewBag.SortOrder"
+                           asp-route-pageSize="@pageSize">›</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+    </div>
+</div>
