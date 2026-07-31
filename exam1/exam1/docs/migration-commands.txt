@@ -1,0 +1,30 @@
+dotnet ef migrations add Initial --context EsportshubApi.Models.ApplicationDbContext -o YourFolderPath -> create migration
+
+dotnet ef database update -> update database
+dotnet ef migrations remove -> remove last migration
+dotnet ef database update LastGoodMigration -> revert to a migration
+dotnet ef migrations script --output "script.sql"-> generate sql
+
+# For updating migration tool to latest version
+dotnet tool update --global dotnet-ef
+
+# Install latest version of dotnet ef tool
+dotnet tool install --global dotnet-ef
+
+# Install specific version of dotnet ef tool
+dotnet tool install --global dotnet-ef --version 3.1.0
+
+
+# If you want to keep migration files in another project (Let's say Infrastructure)
+--In Program.cs
+var migrationAssembly = typeof(ApplicationDbContext).Assembly;
+
+# Create Migration Command
+dotnet ef migrations add Initial --context Demo.Infrastructure.Data.ApplicationDbContext --project Demo.Infrastructure --startup-project Demo.Web -o Data/Migrations
+# Database Update Command
+dotnet ef database update --context Demo.Infrastructure.Data.ApplicationDbContext --project Demo.Infrastructure --startup-project Demo.Web
+
+
+# Create bundle
+dotnet ef migrations bundle --self-contained -r win-x64 -o E:\Works\ProjectName\efbundle.exe
+
