@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Test/">
+    <Project Path="tests/MaleFashion.Application.UnitTests/MaleFashion.Application.UnitTests.csproj" Id="c5a46c16-c07b-4451-9307-aada71f88827" />
+  </Folder>
   <Project Path="src/MaleFashion.Application/MaleFashion.Application.csproj" Id="9f84633f-0231-41ab-a976-107340214287" />
   <Project Path="src/MaleFashion.Domain/MaleFashion.Domain.csproj" Id="0d62ad3d-9027-4c4a-81cc-00c6265885ca" />
   <Project Path="src/MaleFashion.Identity/MaleFashion.Identity.csproj" Id="96b911f9-52a7-4752-8176-097908ac9b5c" />
