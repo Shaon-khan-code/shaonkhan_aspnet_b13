@@ -15,4 +15,6 @@ public class Address : BaseEntity
     public string? State { get; set; }
     public string PostalCode { get; set; } = string.Empty;
     public string Country { get; set; } = string.Empty;
+
+    public ICollection<Order> Orders { get; set; } = new List<Order>();
 }

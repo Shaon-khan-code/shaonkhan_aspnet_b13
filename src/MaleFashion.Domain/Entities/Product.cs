@@ -1,32 +1,24 @@
-﻿using System;
-using MaleFashion.Domain.Common;
-using System.Collections.Generic;
-using System.Text;
+﻿using MaleFashion.Domain.Common;
 
-namespace MaleFashion.Domain.Entities
+namespace MaleFashion.Domain.Entities;
+
+public class Product : AuditableEntity
 {
-    public class Product
-    {
-        public class Product : AuditableEntity
-        {
-            public string Name { get; set; } = string.Empty;
-            public string Slug { get; set; } = string.Empty;
-            public string? Description { get; set; }
-            public string Sku { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Slug { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string Sku { get; set; } = string.Empty;
 
-            public decimal Price { get; set; }
-            public decimal? DiscountPrice { get; set; }
+    public decimal Price { get; set; }
+    public decimal? DiscountPrice { get; set; }
 
-            public int CategoryId { get; set; }
-            public Category Category { get; set; } = null!;
+    public bool IsActive { get; set; } = true;
 
-            public Inventory? Inventory { get; set; }
+    public int CategoryId { get; set; }
+    public Category Category { get; set; } = null!;
 
-            public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
-            public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
-        }
+    public Inventory? Inventory { get; set; }
 
-
-    }
-
+    public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
+    public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }
