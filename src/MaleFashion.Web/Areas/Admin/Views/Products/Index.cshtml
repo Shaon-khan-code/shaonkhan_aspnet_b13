@@ -1,0 +1,99 @@
+﻿@model MaleFashion.Web.Areas.Admin.ViewModels.Products.ProductListViewModel
+
+@{
+    ViewData["Title"] = "Products";
+}
+
+<h1>Products</h1>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<a asp-action="Create" class="btn btn-primary mb-3">Add Product</a>
+
+<form method="get" asp-action="Index" class="row g-2 mb-3">
+    <div class="col-auto">
+        <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Search by name..." />
+    </div>
+    <div class="col-auto">
+        <select name="categoryId" class="form-select" asp-items="Model.CategoryOptions">
+            <option value="">-- All Categories --</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <select name="isActive" class="form-select">
+            <option value="">-- All Status --</option>
+            <option value="true" selected="@(Model.IsActive == true)">Active</option>
+            <option value="false" selected="@(Model.IsActive == false)">Inactive</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </div>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>SKU</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var product in Model.Products.Items)
+        {
+            <tr>
+                <td>@product.Name</td>
+                <td>@product.Sku</td>
+                <td>@product.CategoryName</td>
+                <td>@product.Price.ToString("C")</td>
+                <td>
+                    @if (product.IsActive)
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Inactive</span>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (Model.Products.TotalPages > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @for (var i = 1; i <= Model.Products.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.Products.PageNumber ? "active" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-pageNumber="@i"
+                       asp-route-searchTerm="@Model.SearchTerm"
+                       asp-route-categoryId="@Model.CategoryId"
+                       asp-route-isActive="@Model.IsActive">@i</a>
+                </li>
+            }
+        </ul>
+
+    </nav>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <td>
+        <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-secondary">Edit</a>
+        <a asp-action="Delete" asp-route-id="@product.Id" class="btn btn-sm btn-danger">Delete</a>
+    </td>
+}
