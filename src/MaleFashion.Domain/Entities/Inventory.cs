@@ -1,16 +1,18 @@
-﻿using System;
-using MaleFashion.Domain.Common;
-using System.Collections.Generic;
-using System.Text;
+﻿using MaleFashion.Domain.Common;
 
-namespace MaleFashion.Domain.Entities
+namespace MaleFashion.Domain.Entities;
+
+public class Inventory : BaseEntity
 {
-    public class Inventory : BaseEntity
-    {
-        public int ProductId { get; set; }
-        public Product Product { get; set; } = null!;
+    public int ProductId { get; set; }
+    public Product Product { get; set; } = null!;
 
-        public int QuantityInStock { get; set; }
-        public int ReservedQuantity { get; set; }
-    }
+    public int QuantityInStock { get; set; }
+    public int ReservedQuantity { get; set; }
+    public int ReorderLevel { get; set; }
+
+    public DateTime LastUpdatedAt { get; set; }
+
+    public int AvailableQuantity => QuantityInStock - ReservedQuantity;
+    public bool IsLowStock => AvailableQuantity <= ReorderLevel;
 }

@@ -10,16 +10,19 @@ public class InventoryConfiguration : IEntityTypeConfiguration<Inventory>
     {
         builder.HasKey(i => i.Id);
 
-        // Explicit 1:1 configuration — EF Core cannot reliably infer
-        // principal/dependent for one-to-one relationships by convention.
         builder.HasOne(i => i.Product)
             .WithOne(p => p.Inventory)
             .HasForeignKey<Inventory>(i => i.ProductId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Enforces true one-to-one at the database level: a product
-        // cannot have more than one inventory record.
         builder.HasIndex(i => i.ProductId)
             .IsUnique();
+
+        builder.Property(i => i.ReorderLevel)
+            .HasDefaultValue(0);
+
+        // AvailableQuantity and IsLowStock are computed, get-only properties
+        // on the entity (no setter) — EF Core excludes them from the model
+        // by convention, so no explicit .Ignore() is required here.
     }
 }

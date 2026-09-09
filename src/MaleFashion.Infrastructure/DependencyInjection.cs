@@ -14,6 +14,7 @@ using Amazon.S3;
 using Amazon;
 using MaleFashion.Infrastructure.Services.S3;
 
+
 namespace MaleFashion.Infrastructure;
 
 public static class DependencyInjection
@@ -39,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IApplicationUnitOfWork, ApplicationUnitOfWork>();
         services.Configure<AwsOptions>(configuration.GetSection("Aws"));
+        services.AddScoped<IInventoryRepository, InventoryRepository>();
 
         services.AddSingleton<IAmazonS3>(sp =>
         {

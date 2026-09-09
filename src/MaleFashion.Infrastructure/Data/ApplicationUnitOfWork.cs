@@ -11,10 +11,12 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         _context = context;
         Categories = new CategoryRepository(_context);
         Products = new ProductRepository(_context);
+        Inventory = new InventoryRepository(_context);
     }
 
     public ICategoryRepository Categories { get; }
     public IProductRepository Products { get; }
+    public IInventoryRepository Inventory { get; }
 
     public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();
 
