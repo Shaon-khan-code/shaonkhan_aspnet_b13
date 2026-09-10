@@ -16,5 +16,13 @@ public class MappingConfig : IRegister
         config.NewConfig<Inventory, InventoryDto>()
             .Map(dest => dest.ProductName, src => src.Product.Name)
             .Map(dest => dest.ProductSku, src => src.Product.Sku);
+
+        config.NewConfig<Address, AddressDto>();
+        config.NewConfig<OrderItem, OrderItemDto>();
+        config.NewConfig<Order, OrderDto>()
+            .Map(dest => dest.ShippingAddress, src => src.ShippingAddress);
+
+        config.NewConfig<Order, OrderSummaryDto>()
+    .Map(dest => dest.ItemCount, src => src.OrderItems.Count);
     }
 }

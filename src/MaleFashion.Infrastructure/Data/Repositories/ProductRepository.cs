@@ -1,4 +1,5 @@
 ﻿using MaleFashion.Application.Contracts.Repositories;
+using MaleFashion.Application.Features.Products.Queries.GetProductList;
 using MaleFashion.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,9 @@ public class ProductRepository : Repository<Product>, IProductRepository
         string? searchTerm,
         int? categoryId,
         bool? isActive,
+        decimal? minPrice,
+        decimal? maxPrice,
+        ProductSortOption sortBy,
         int pageNumber,
         int pageSize)
     {
@@ -34,10 +38,28 @@ public class ProductRepository : Repository<Product>, IProductRepository
             query = query.Where(p => p.IsActive == isActive.Value);
         }
 
+        if (minPrice.HasValue)
+        {
+            query = query.Where(p => p.Price >= minPrice.Value);
+        }
+
+        if (maxPrice.HasValue)
+        {
+            query = query.Where(p => p.Price <= maxPrice.Value);
+        }
+
+        query = sortBy switch
+        {
+            ProductSortOption.NameDesc => query.OrderByDescending(p => p.Name),
+            ProductSortOption.PriceAsc => query.OrderBy(p => p.Price),
+            ProductSortOption.PriceDesc => query.OrderByDescending(p => p.Price),
+            ProductSortOption.Newest => query.OrderByDescending(p => p.CreatedAt),
+            _ => query.OrderBy(p => p.Name)
+        };
+
         var totalCount = await query.CountAsync();
 
         var items = await query
-            .OrderBy(p => p.Name)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -53,5 +75,25 @@ public class ProductRepository : Repository<Product>, IProductRepository
     public async Task<bool> HasOrderItemsAsync(int productId)
     {
         return await Context.Set<OrderItem>().AnyAsync(oi => oi.ProductId == productId);
+    }
+
+    public async Task<Product?> GetDetailsAsync(int id)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Include(p => p.Category)
+            .Include(p => p.Inventory)
+            .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
+    }
+
+    public async Task<List<Product>> GetRelatedProductsAsync(int categoryId, int excludeProductId, int count)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Include(p => p.Category)
+            .Where(p => p.CategoryId == categoryId && p.Id != excludeProductId && p.IsActive)
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(count)
+            .ToListAsync();
     }
 }

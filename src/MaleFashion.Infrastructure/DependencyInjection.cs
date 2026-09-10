@@ -1,18 +1,19 @@
-﻿using MaleFashion.Application.Contracts.Repositories;
+﻿using Amazon;
+using Amazon.S3;
+using MaleFashion.Application.Contracts.Repositories;
 using MaleFashion.Application.Contracts.Services;
 using MaleFashion.Infrastructure.Data;
 using MaleFashion.Infrastructure.Data.Repositories;
 using MaleFashion.Infrastructure.Identity;
 using MaleFashion.Infrastructure.Options;
 using MaleFashion.Infrastructure.Services.Email;
+using MaleFashion.Infrastructure.Services.Payment;
+using MaleFashion.Infrastructure.Services.Recaptcha;
+using MaleFashion.Infrastructure.Services.S3;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using MaleFashion.Infrastructure.Services.Recaptcha;
-using Amazon.S3;
-using Amazon;
-using MaleFashion.Infrastructure.Services.S3;
 
 
 namespace MaleFashion.Infrastructure;
@@ -41,6 +42,10 @@ public static class DependencyInjection
         services.AddScoped<IApplicationUnitOfWork, ApplicationUnitOfWork>();
         services.Configure<AwsOptions>(configuration.GetSection("Aws"));
         services.AddScoped<IInventoryRepository, InventoryRepository>();
+        services.AddScoped<ICartRepository, CartRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IAddressRepository, AddressRepository>();
+        services.AddScoped<ISimulatedPaymentService, SimulatedCardPaymentService>();
 
         services.AddSingleton<IAmazonS3>(sp =>
         {

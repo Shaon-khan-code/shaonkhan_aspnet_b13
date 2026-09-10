@@ -260,4 +260,14 @@ public class AccountController : Controller
         _emailService = emailService;
         _recaptchaService = recaptchaService;
     }
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Logout()
+    {
+        await _signInManager.SignOutAsync();
+        +Response.Cookies.Delete("MaleFashion.GuestCartId");
+        return RedirectToAction("Index", "Home");
+    }
 }
