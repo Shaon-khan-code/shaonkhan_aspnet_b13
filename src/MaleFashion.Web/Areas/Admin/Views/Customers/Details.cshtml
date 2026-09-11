@@ -1,0 +1,78 @@
+﻿@model MaleFashion.Web.Areas.Admin.ViewModels.Customers.CustomerDetailsViewModel
+
+<h1>Customer: @Model.Email</h1>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<dl class="row">
+    <dt class="col-sm-2">Full Name</dt>
+    <dd class="col-sm-10">@Model.FullName</dd>
+
+    <dt class="col-sm-2">Email</dt>
+    <dd class="col-sm-10">@Model.Email</dd>
+
+    <dt class="col-sm-2">Phone</dt>
+    <dd class="col-sm-10">@Model.PhoneNumber</dd>
+
+    <dt class="col-sm-2">Status</dt>
+    <dd class="col-sm-10">
+        @if (Model.IsLockedOut)
+        {
+            <span class="badge bg-danger">Inactive</span>
+        }
+        else
+        {
+            <span class="badge bg-success">Active</span>
+        }
+    </dd>
+</dl>
+
+<form asp-action="ToggleStatus" asp-route-id="@Model.Id" method="post">
+    @if (Model.IsLockedOut)
+    {
+        <button type="submit" class="btn btn-success">Reactivate Account</button>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-danger">Deactivate Account</button>
+    }
+</form>
+
+<h3 class="mt-4">Order History</h3>
+@if (!Model.Orders.Any())
+{
+    <p>This customer has not placed any orders.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Payment</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model.Orders)
+            {
+                <tr>
+                    <td>@order.OrderNumber</td>
+                    <td>@order.CreatedAt.ToString("g")</td>
+                    <td>@order.ItemCount</td>
+                    <td>@order.TotalAmount.ToString("C")</td>
+                    <td><span class="badge bg-info">@order.Status</span></td>
+                    <td><span class="badge bg-secondary">@order.PaymentStatus</span></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<a asp-action="Index" class="btn btn-secondary">Back to Customers</a>
