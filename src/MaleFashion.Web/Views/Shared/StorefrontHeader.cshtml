@@ -1,0 +1,28 @@
+﻿<header class="storefront-header">
+    <nav class="navbar">
+        <a class="navbar-brand" asp-controller="Home" asp-action="Index">MaleFashion</a>
+
+        <ul class="navbar-nav">
+            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <!-- PLACEHOLDER: Shop link will be enabled once ShopController exists -->
+            <li><a href="#">Shop</a></li>
+        </ul>
+
+        <ul class="navbar-actions">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <li>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                        <button type="submit" class="btn-link">Logout</button>
+                    </form>
+                </li>
+            }
+            else
+            {
+                <li><a asp-controller="Account" asp-action="Login">Login</a></li>
+                <li><a asp-controller="Account" asp-action="Register">Register</a></li>
+            }
+            <!-- PLACEHOLDER: Cart icon/link will be enabled once CartController exists -->
+        </ul>
+    </nav>
+</header>

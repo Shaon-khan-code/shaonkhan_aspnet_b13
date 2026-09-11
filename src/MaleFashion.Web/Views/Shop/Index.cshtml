@@ -1,0 +1,88 @@
+﻿@model MaleFashion.Web.ViewModels.Shop.ShopIndexViewModel
+@using MaleFashion.Application.Features.Products.Queries.GetProductList
+
+@{
+    ViewData["Title"] = "Shop";
+}
+
+<h1>Shop</h1>
+
+<form method="get" asp-action="Index" class="row g-2 mb-4">
+    <div class="col-auto">
+        <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Search products..." />
+    </div>
+    <div class="col-auto">
+        <select name="categoryId" class="form-select" asp-items="Model.CategoryOptions">
+            <option value="">-- All Categories --</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <input type="number" name="minPrice" value="@Model.MinPrice" class="form-control" placeholder="Min price" step="0.01" min="0" />
+    </div>
+    <div class="col-auto">
+        <input type="number" name="maxPrice" value="@Model.MaxPrice" class="form-control" placeholder="Max price" step="0.01" min="0" />
+    </div>
+    <div class="col-auto">
+        <select name="sortBy" class="form-select">
+            <option value="@ProductSortOption.NameAsc" selected="@(Model.SortBy == ProductSortOption.NameAsc)">Name (A-Z)</option>
+            <option value="@ProductSortOption.NameDesc" selected="@(Model.SortBy == ProductSortOption.NameDesc)">Name (Z-A)</option>
+            <option value="@ProductSortOption.PriceAsc" selected="@(Model.SortBy == ProductSortOption.PriceAsc)">Price (Low to High)</option>
+            <option value="@ProductSortOption.PriceDesc" selected="@(Model.SortBy == ProductSortOption.PriceDesc)">Price (High to Low)</option>
+            <option value="@ProductSortOption.Newest" selected="@(Model.SortBy == ProductSortOption.Newest)">Newest</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Apply</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </div>
+</form>
+
+<div class="row">
+    @foreach (var product in Model.Products.Items)
+    {
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+                @if (!string.IsNullOrEmpty(product.ImageUrl))
+                {
+                    <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" />
+                }
+                <div class="card-body">
+                    <h5 class="card-title">@product.Name</h5>
+                    <p class="text-muted">@product.CategoryName</p>
+                    <p class="fw-bold">
+                        @if (product.DiscountPrice.HasValue)
+                        {
+                            <span class="text-decoration-line-through text-muted">@product.Price.ToString("C")</span>
+                            <span class="text-danger">@product.DiscountPrice.Value.ToString("C")</span>
+                        }
+                        else
+                        {
+                            @product.Price.ToString("C")
+                        }
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (Model.Products.TotalPages > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @for (var i = 1; i <= Model.Products.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.Products.PageNumber ? "active" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-pageNumber="@i"
+                       asp-route-searchTerm="@Model.SearchTerm"
+                       asp-route-categoryId="@Model.CategoryId"
+                       asp-route-minPrice="@Model.MinPrice"
+                       asp-route-maxPrice="@Model.MaxPrice"
+                       asp-route-sortBy="@Model.SortBy">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

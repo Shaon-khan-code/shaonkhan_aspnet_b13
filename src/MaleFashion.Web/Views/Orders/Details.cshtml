@@ -1,0 +1,60 @@
+﻿@model MaleFashion.Application.DTOs.OrderDto
+
+@{
+    ViewData["Title"] = $"Order {Model.OrderNumber}";
+}
+
+<h1>Order @Model.OrderNumber</h1>
+
+<dl class="row">
+    <dt class="col-sm-2">Placed On</dt>
+    <dd class="col-sm-10">@Model.CreatedAt.ToString("g")</dd>
+
+    <dt class="col-sm-2">Status</dt>
+    <dd class="col-sm-10"><span class="badge bg-info">@Model.Status</span></dd>
+
+    <dt class="col-sm-2">Payment Status</dt>
+    <dd class="col-sm-10"><span class="badge bg-secondary">@Model.PaymentStatus</span></dd>
+
+    <dt class="col-sm-2">Shipping Address</dt>
+    <dd class="col-sm-10">
+        @Model.ShippingAddress.FullName<br />
+        @Model.ShippingAddress.Line1
+        @if (!string.IsNullOrEmpty(Model.ShippingAddress.Line2))
+        {
+            <text>, @Model.ShippingAddress.Line2</text>
+        }
+        <br />
+        @Model.ShippingAddress.City, @Model.ShippingAddress.PostalCode<br />
+        @Model.ShippingAddress.Country
+    </dd>
+</dl>
+
+<h3>Items</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Line Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>@item.ProductName</td>
+                <td>@item.Quantity</td>
+                <td>@item.UnitPrice.ToString("C")</td>
+                <td>@item.LineTotal.ToString("C")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="text-end">
+    <h4>Total: @Model.TotalAmount.ToString("C")</h4>
+</div>
+
+<a asp-action="Index" class="btn btn-secondary">Back to Orders</a>

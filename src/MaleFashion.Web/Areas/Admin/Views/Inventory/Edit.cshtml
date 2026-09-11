@@ -1,0 +1,41 @@
+﻿@model MaleFashion.Web.Areas.Admin.ViewModels.Inventory.UpdateStockViewModel
+
+@{
+    ViewData["Title"] = "Update Stock";
+}
+
+<h1>Update Stock</h1>
+
+<dl class="row">
+    <dt class="col-sm-2">Product</dt>
+    <dd class="col-sm-10">@Model.ProductName (@Model.ProductSku)</dd>
+
+    <dt class="col-sm-2">Reserved</dt>
+    <dd class="col-sm-10">@Model.ReservedQuantity <span class="text-muted">(managed automatically by orders/cart, not editable here)</span></dd>
+</dl>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="QuantityInStock" class="form-label"></label>
+        <input asp-for="QuantityInStock" class="form-control" />
+        <span asp-validation-for="QuantityInStock" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ReorderLevel" class="form-label"></label>
+        <input asp-for="ReorderLevel" class="form-control" />
+        <span asp-validation-for="ReorderLevel" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

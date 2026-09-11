@@ -1,0 +1,72 @@
+﻿@model MaleFashion.Web.Areas.Admin.ViewModels.Orders.OrderListViewModel
+@using MaleFashion.Domain.Enums
+
+<h1>Orders</h1>
+
+<form method="get" asp-action="Index" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="status" class="form-select">
+            <option value="">-- All Statuses --</option>
+            @foreach (var s in Enum.GetValues<OrderStatus>())
+            {
+                <option value="@s" selected="@(Model.Status == s)">@s</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <select name="paymentStatus" class="form-select">
+            <option value="">-- All Payment Statuses --</option>
+            @foreach (var p in Enum.GetValues<PaymentStatus>())
+            {
+                <option value="@p" selected="@(Model.PaymentStatus == p)">@p</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </div>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var order in Model.Orders.Items)
+        {
+            <tr>
+                <td>@order.OrderNumber</td>
+                <td>@order.CustomerName</td>
+                <td>@order.CreatedAt.ToString("g")</td>
+                <td>@order.TotalAmount.ToString("C")</td>
+                <td><span class="badge bg-info">@order.Status</span></td>
+                <td><span class="badge bg-secondary">@order.PaymentStatus</span></td>
+                <td><a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-secondary">View</a></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (Model.Orders.TotalPages > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @for (var i = 1; i <= Model.Orders.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.Orders.PageNumber ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-pageNumber="@i"
+                       asp-route-status="@Model.Status" asp-route-paymentStatus="@Model.PaymentStatus">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

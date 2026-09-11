@@ -24,5 +24,9 @@ public class MappingConfig : IRegister
 
         config.NewConfig<Order, OrderSummaryDto>()
     .Map(dest => dest.ItemCount, src => src.OrderItems.Count);
+
+        config.NewConfig<Order, OrderListItemDto>()
+    .Map(dest => dest.CustomerName, src => src.ShippingAddress.FullName);
+
     }
 }

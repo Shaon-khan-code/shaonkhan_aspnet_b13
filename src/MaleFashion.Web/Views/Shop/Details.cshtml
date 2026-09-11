@@ -1,0 +1,89 @@
+﻿@model MaleFashion.Application.DTOs.ProductDetailsDto
+
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="row">
+    <div class="col-md-5">
+        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+        {
+            <img src="@Model.ImageUrl" alt="@Model.Name" class="img-fluid" />
+        }
+        else
+        {
+            <div class="bg-light text-center p-5 text-muted">No image available</div>
+        }
+    </div>
+
+    <div class="col-md-7">
+        <h1>@Model.Name</h1>
+        <p class="text-muted">
+            <a asp-action="Index" asp-route-categoryId="@Model.CategoryId">@Model.CategoryName</a>
+        </p>
+
+        <p class="fs-4">
+            @if (Model.DiscountPrice.HasValue)
+            {
+                <span class="text-decoration-line-through text-muted">@Model.Price.ToString("C")</span>
+                <span class="text-danger fw-bold">@Model.DiscountPrice.Value.ToString("C")</span>
+            }
+            else
+            {
+                <span class="fw-bold">@Model.Price.ToString("C")</span>
+            }
+        </p>
+
+        <p>
+            @if (Model.IsInStock)
+            {
+                <span class="badge bg-success">In Stock</span>
+            }
+            else
+            {
+                <span class="badge bg-danger">Out of Stock</span>
+            }
+        </p>
+
+        <p>@Model.Description</p>
+
+        <p class="text-muted">SKU: @Model.Sku</p>
+    </div>
+</div>
+
+@if (Model.RelatedProducts.Any())
+{
+    <hr />
+    <h3>Related Products</h3>
+    <div class="row">
+        @foreach (var related in Model.RelatedProducts)
+        {
+            <div class="col-md-3 mb-4">
+                <div class="card h-100">
+                    @if (!string.IsNullOrEmpty(related.ImageUrl))
+                    {
+                        <img src="@related.ImageUrl" class="card-img-top" alt="@related.Name" />
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <a asp-action="Details" asp-route-id="@related.Id">@related.Name</a>
+                        </h5>
+                        <p class="fw-bold">@related.Price.ToString("C")</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (Model.IsInStock)
+    {
+        <form asp-controller="Cart" asp-action="Add" method="post" class="d-flex align-items-end gap-2 mb-3">
+            <input type="hidden" name="productId" value="@Model.Id" />
+            <div>
+                <label class="form-label">Quantity</label>
+                <input type="number" name="quantity" value="1" min="1" max="@Model.AvailableQuantity" class="form-control" style="width:100px;" />
+            </div>
+            <button type="submit" class="btn btn-primary">Add to Cart</button>
+        </form>
+    }
+}
