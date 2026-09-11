@@ -1,0 +1,83 @@
+﻿@model MaleFashion.Application.DTOs.DashboardSummaryDto
+
+<h1>Dashboard</h1>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Total Products</h6>
+                <h3>@Model.TotalProducts</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Total Customers</h6>
+                <h3>@Model.TotalCustomers</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Total Orders</h6>
+                <h3>@Model.TotalOrders</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Total Revenue</h6>
+                <h3>@Model.TotalRevenue.ToString("C")</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Pending Orders</h6>
+                <h3>@Model.PendingOrders</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card @(Model.LowStockProducts > 0 ? "border-danger" : "")">
+            <div class="card-body">
+                <h6 class="text-muted">Low Stock Products</h6>
+                <h3>@Model.LowStockProducts</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3>Recent Orders</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var order in Model.RecentOrders)
+        {
+            <tr>
+                <td>@order.OrderNumber</td>
+                <td>@order.CustomerName</td>
+                <td>@order.CreatedAt.ToString("g")</td>
+                <td>@order.TotalAmount.ToString("C")</td>
+                <td><span class="badge bg-info">@order.Status</span></td>
+                <td><span class="badge bg-secondary">@order.PaymentStatus</span></td>
+                <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-secondary">View</a></td>
+            </tr>
+        }
+    </tbody>
+</table>
