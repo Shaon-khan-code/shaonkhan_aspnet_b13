@@ -14,4 +14,8 @@ public interface IOrderRepository : IRepository<Order>
         PaymentStatus? paymentStatus,
         int pageNumber,
         int pageSize);
+
+    Task<decimal> GetTotalRevenueAsync(PaymentStatus paymentStatus);
+
+    Task<List<Order>> GetRecentOrdersAsync(int count);
 }

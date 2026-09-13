@@ -54,5 +54,21 @@ public class OrderRepository : Repository<Order>, IOrderRepository
 
         return (items, totalCount);
     }
+    public async Task<decimal> GetTotalRevenueAsync(PaymentStatus paymentStatus)
+    {
+        return await DbSet
+            .Where(o => o.PaymentStatus == paymentStatus)
+            .SumAsync(o => o.TotalAmount);
+    }
+
+    public async Task<List<Order>> GetRecentOrdersAsync(int count)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Include(o => o.ShippingAddress)
+            .OrderByDescending(o => o.CreatedAt)
+            .Take(count)
+            .ToListAsync();
+    }
 
 }

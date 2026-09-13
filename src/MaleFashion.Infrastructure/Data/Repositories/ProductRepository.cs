@@ -76,4 +76,23 @@ public class ProductRepository : Repository<Product>, IProductRepository
     {
         return await Context.Set<OrderItem>().AnyAsync(oi => oi.ProductId == productId);
     }
+    public async Task<Product?> GetDetailsAsync(int id)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Include(p => p.Category)
+            .Include(p => p.Inventory)
+            .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
+    }
+
+    public async Task<List<Product>> GetRelatedProductsAsync(int categoryId, int excludeProductId, int count)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Include(p => p.Category)
+            .Where(p => p.CategoryId == categoryId && p.Id != excludeProductId && p.IsActive)
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(count)
+            .ToListAsync();
+    }
 }

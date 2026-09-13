@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 using MediatR;
-using System.ComponentModel.DataAnnotations;
+
 
 namespace MaleFashion.Application.Common.Behaviors;
 

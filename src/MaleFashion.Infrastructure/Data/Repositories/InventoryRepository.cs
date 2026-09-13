@@ -15,6 +15,12 @@ public class InventoryRepository : Repository<Inventory>, IInventoryRepository
         return await DbSet.Include(i => i.Product)
             .FirstOrDefaultAsync(i => i.ProductId == productId);
     }
+    public async Task<int> GetLowStockCountAsync()
+    {
+        return await DbSet
+            .Where(i => i.QuantityInStock - i.ReservedQuantity <= i.ReorderLevel)
+            .CountAsync();
+    }
 
     public async Task<(List<Inventory> Items, int TotalCount)> GetPagedAsync(
         bool? lowStockOnly, int pageNumber, int pageSize)

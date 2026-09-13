@@ -23,6 +23,7 @@ public class UpdateCartItemQuantityCommandHandler : IRequestHandler<UpdateCartIt
         var isOwner = cartItem.Cart.UserId == request.UserId ||
                       (cartItem.Cart.GuestId.HasValue && cartItem.Cart.GuestId == request.GuestId);
 
+
         if (!isOwner)
         {
             throw new NotFoundException(nameof(CartItem), request.CartItemId);
@@ -40,4 +41,6 @@ public class UpdateCartItemQuantityCommandHandler : IRequestHandler<UpdateCartIt
 
         return Unit.Value;
     }
+
+
 }

@@ -5,7 +5,7 @@ using MaleFashion.Web.ViewModels.Account;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using MaleFashion.Application.Contracts.Services;
+
 
 namespace MaleFashion.Web.Controllers;
 
@@ -118,19 +118,8 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Home");
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Logout()
-    {
-        await _signInManager.SignOutAsync();
-        return RedirectToAction("Index", "Home");
-    }
+   
 
-    [HttpGet]
-    public IActionResult ForgotPassword()
-    {
-        return View(new ForgotPasswordViewModel());
-    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -260,14 +249,14 @@ public class AccountController : Controller
         _emailService = emailService;
         _recaptchaService = recaptchaService;
     }
-
-
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
         await _signInManager.SignOutAsync();
-        +Response.Cookies.Delete("MaleFashion.GuestCartId");
+        Response.Cookies.Delete("MaleFashion.GuestCartId");
         return RedirectToAction("Index", "Home");
     }
+
+
 }

@@ -1,5 +1,4 @@
-﻿using MaleFashion.Application.Common.Models;
-using MaleFashion.Domain.Entities;
+﻿using MaleFashion.Domain.Entities;
 
 namespace MaleFashion.Application.Contracts.Repositories;
 
@@ -11,4 +10,6 @@ public interface IInventoryRepository : IRepository<Inventory>
         bool? lowStockOnly,
         int pageNumber,
         int pageSize);
+
+    Task<int> GetLowStockCountAsync();
 }
