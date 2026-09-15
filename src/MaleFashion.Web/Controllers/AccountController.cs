@@ -16,13 +16,15 @@ public class AccountController : Controller
     private readonly IEmailService _emailService;
 
     public AccountController(
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        IEmailService emailService)
+     UserManager<ApplicationUser> userManager,
+     SignInManager<ApplicationUser> signInManager,
+     IEmailService emailService,
+     IRecaptchaService recaptchaService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _emailService = emailService;
+        _recaptchaService = recaptchaService;
     }
 
     [HttpGet]
@@ -238,17 +240,7 @@ public class AccountController : Controller
     }
     private readonly IRecaptchaService _recaptchaService;
 
-    public AccountController(
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        IEmailService emailService,
-        IRecaptchaService recaptchaService)
-    {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _emailService = emailService;
-        _recaptchaService = recaptchaService;
-    }
+    
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()

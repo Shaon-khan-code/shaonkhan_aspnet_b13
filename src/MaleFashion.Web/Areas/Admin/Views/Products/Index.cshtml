@@ -63,7 +63,13 @@
                         <span class="badge bg-secondary">Inactive</span>
                     }
                 </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-secondary">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@product.Id" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+
             </tr>
+
         }
     </tbody>
 </table>
@@ -92,8 +98,4 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <td>
-        <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-secondary">Edit</a>
-        <a asp-action="Delete" asp-route-id="@product.Id" class="btn btn-sm btn-danger">Delete</a>
-    </td>
 }

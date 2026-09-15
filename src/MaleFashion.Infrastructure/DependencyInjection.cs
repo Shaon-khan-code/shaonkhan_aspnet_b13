@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MaleFashion.Infrastructure.Services.Users;
 
 
 namespace MaleFashion.Infrastructure;
@@ -46,6 +47,8 @@ public static class DependencyInjection
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IAddressRepository, AddressRepository>();
         services.AddScoped<ISimulatedPaymentService, SimulatedCardPaymentService>();
+        services.AddScoped<IUserStatisticsService, UserStatisticsService>();
+
 
         services.AddSingleton<IAmazonS3>(sp =>
         {

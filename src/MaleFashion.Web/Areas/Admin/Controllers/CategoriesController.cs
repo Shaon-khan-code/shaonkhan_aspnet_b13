@@ -11,6 +11,8 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using MaleFashion.Application.DTOs;
+
 
 namespace MaleFashion.Web.Areas.Admin.Controllers;
 
@@ -73,7 +75,7 @@ public class CategoriesController : Controller
 
     public async Task<IActionResult> Edit(int id)
     {
-        CategoryDtoResult category;
+        CategoryDto category;
         try
         {
             category = await _mediator.Send(new GetCategoryByIdQuery { Id = id });
@@ -176,4 +178,15 @@ public class CategoriesController : Controller
             .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
             .ToList();
     }
+
+    private void AddValidationErrors(FluentValidation.ValidationException ex)
+    {
+        foreach (var error in ex.Errors)
+        {
+            ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+        }
+    }
+
 }
+
+

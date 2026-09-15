@@ -21,4 +21,5 @@ public class UpdateStockViewModel
     [Range(0, int.MaxValue, ErrorMessage = "Reorder level cannot be negative.")]
     [Display(Name = "Reorder Level")]
     public int ReorderLevel { get; set; }
+    public int ReservedQuantity { get; set; }
 }
