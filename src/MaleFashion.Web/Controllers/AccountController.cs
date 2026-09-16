@@ -97,7 +97,7 @@ public class AccountController : Controller
         }
 
         var result = await _signInManager.PasswordSignInAsync(
-            user.UserName!, model.Password, model.RememberMe, lockoutOnFailure: false);
+            user.UserName!, model.Password, model.RememberMe, lockoutOnFailure: true);
 
         if (!result.Succeeded)
         {

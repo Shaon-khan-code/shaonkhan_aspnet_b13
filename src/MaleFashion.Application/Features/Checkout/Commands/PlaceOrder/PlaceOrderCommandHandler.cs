@@ -25,10 +25,19 @@ public class PlaceOrderCommandHandler : IRequestHandler<PlaceOrderCommand, Order
 
     public async Task<OrderDto> Handle(PlaceOrderCommand request, CancellationToken cancellationToken)
     {
-        // --- Outside the transaction: no DB writes yet ---
-
         var address = await _unitOfWork.Addresses.GetByIdAsync(request.ShippingAddressId)
             ?? throw new NotFoundException(nameof(Address), request.ShippingAddressId);
+
+        // Ownership check (Security Fix #4): a customer/guest may only ship to
+        // their own saved address, never one belonging to someone else.
+        var ownsAddress =
+            (request.UserId != null && address.UserId == request.UserId) ||
+            (request.GuestId.HasValue && address.GuestId == request.GuestId);
+
+        if (!ownsAddress)
+        {
+            throw new NotFoundException(nameof(Address), request.ShippingAddressId);
+        }
 
         var cart = await _unitOfWork.Carts.GetByOwnerAsync(request.UserId, request.GuestId);
         if (cart == null || !cart.CartItems.Any())
@@ -36,7 +45,6 @@ public class PlaceOrderCommandHandler : IRequestHandler<PlaceOrderCommand, Order
             throw new ConflictException("Your cart is empty.");
         }
 
-        // 1. Validate stock (pre-payment check — fail fast before charging the card).
         foreach (var item in cart.CartItems)
         {
             var available = item.Product.Inventory?.AvailableQuantity ?? 0;
@@ -49,25 +57,16 @@ public class PlaceOrderCommandHandler : IRequestHandler<PlaceOrderCommand, Order
 
         var totalAmount = cart.CartItems.Sum(ci => ci.UnitPrice * ci.Quantity);
 
-        // Payment happens BEFORE the transaction starts and is NOT part of it —
-        // it is an external call, not a database operation. If it fails, nothing
-        // below runs and the database is untouched.
         var paymentResult = await _paymentService.ChargeAsync(request.Card, totalAmount, cancellationToken);
         if (!paymentResult.Success)
         {
             throw new PaymentFailedException(paymentResult.FailureReason ?? "Payment was declined.");
         }
 
-        // --- Transactional boundary: steps 1 (re-check under transaction), 2-6 ---
-
         await _unitOfWork.BeginTransactionAsync();
 
         try
         {
-            // Re-validate stock again, now inside the transaction, immediately
-            // before committing changes. Time has passed since the check above
-            // (payment gateway round-trip) — another order could have consumed
-            // the same stock in the meantime.
             foreach (var item in cart.CartItems)
             {
                 var available = item.Product.Inventory?.AvailableQuantity ?? 0;
@@ -79,11 +78,11 @@ public class PlaceOrderCommandHandler : IRequestHandler<PlaceOrderCommand, Order
                 }
             }
 
-            // 2. Create Order + 3. Create OrderItems + 5. Set PaymentStatus
             var order = new Order
             {
                 OrderNumber = GenerateOrderNumber(),
                 UserId = request.UserId,
+                GuestId = request.GuestId,
                 Status = OrderStatus.Processing,
                 PaymentStatus = PaymentStatus.Paid,
                 TotalAmount = totalAmount,
@@ -102,7 +101,6 @@ public class PlaceOrderCommandHandler : IRequestHandler<PlaceOrderCommand, Order
 
             await _unitOfWork.Orders.AddAsync(order);
 
-            // 4. Reduce Inventory
             foreach (var item in cart.CartItems)
             {
                 item.Product.Inventory!.QuantityInStock -= item.Quantity;
@@ -111,9 +109,7 @@ public class PlaceOrderCommandHandler : IRequestHandler<PlaceOrderCommand, Order
 
             cart.CartItems.Clear();
 
-            // 6. Save everything safely — one atomic write inside the transaction.
             await _unitOfWork.SaveChangesAsync();
-
             await _unitOfWork.CommitTransactionAsync();
 
             return _mapper.Map<OrderDto>(order);

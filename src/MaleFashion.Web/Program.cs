@@ -7,6 +7,8 @@ using MaleFashion.Infrastructure.Options;
 using MaleFashion.Web.Middleware;
 using MaleFashion.Web.ViewModels.Account;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Serilog;
 
 // Bootstrap logger: captures any startup failure before the full host/config
@@ -39,10 +41,16 @@ try
             .Destructure.ByTransforming<ChangePasswordViewModel>(_ => new { Redacted = true })
             .Destructure.ByTransforming<ResetPasswordViewModel>(m => new { m.Email })
             .Destructure.ByTransforming<AwsOptions>(_ => new { Redacted = "AWS credentials" })
+            .Destructure.ByTransforming<RecaptchaOptions>(o => new { o.SiteKey, o.MinimumScore })
             .Destructure.ByTransforming<EmailOptions>(o => new { o.Host, o.FromEmail });
     });
 
     builder.Services.AddControllersWithViews();
+    builder.Services.AddControllersWithViews(options =>
+    {
+        options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+    });
+
     builder.Services.AddApplicationServices();
     builder.Services.AddInfrastructureServices(builder.Configuration);
 

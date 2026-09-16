@@ -24,7 +24,10 @@ public class GetOrderConfirmationQueryHandler : IRequestHandler<GetOrderConfirma
         var order = await _unitOfWork.Orders.GetByIdWithItemsAsync(request.OrderId)
             ?? throw new NotFoundException(nameof(Order), request.OrderId);
 
-        var isOwner = order.UserId == request.UserId;
+        var isOwner =
+            (request.UserId != null && order.UserId == request.UserId) ||
+            (request.GuestId.HasValue && order.GuestId == request.GuestId);
+
         if (!isOwner)
         {
             throw new NotFoundException(nameof(Order), request.OrderId);

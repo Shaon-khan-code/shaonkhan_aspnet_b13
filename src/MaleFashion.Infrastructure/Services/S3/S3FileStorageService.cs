@@ -13,6 +13,7 @@ public class S3FileStorageService : IFileStorageService
     private readonly AwsOptions _options;
     private readonly ILogger<S3FileStorageService> _logger;
 
+
     public S3FileStorageService(IAmazonS3 s3Client, IOptions<AwsOptions> options, ILogger<S3FileStorageService> logger)
     {
         _s3Client = s3Client;
@@ -31,6 +32,11 @@ public class S3FileStorageService : IFileStorageService
 
         var sanitizedFileName = Path.GetFileName(fileName);
         var key = $"{folder.Trim('/')}/{Guid.NewGuid()}-{sanitizedFileName}";
+
+        if (!ImageContentValidator.IsValidImage(fileStream))
+        {
+            throw new InvalidOperationException("The uploaded file is not a valid image.");
+        }
 
         var request = new PutObjectRequest
         {
@@ -79,4 +85,6 @@ public class S3FileStorageService : IFileStorageService
 
         return $"https://{_options.BucketName}.s3.{_options.Region}.amazonaws.com/{key}";
     }
+
+
 }

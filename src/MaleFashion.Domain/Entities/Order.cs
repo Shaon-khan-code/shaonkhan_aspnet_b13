@@ -1,25 +1,22 @@
-﻿using MaleFashion.Domain.Enums;
-using MaleFashion.Domain.Common;
-using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Text;
+﻿using MaleFashion.Domain.Common;
+using MaleFashion.Domain.Enums;
 
-namespace MaleFashion.Domain.Entities
+namespace MaleFashion.Domain.Entities;
+
+public class Order : AuditableEntity
 {
-    public class Order : AuditableEntity
-    {
-        public string OrderNumber { get; set; } = string.Empty;
-        public string? UserId { get; set; }
+    public string OrderNumber { get; set; } = string.Empty;
+    public string? UserId { get; set; }
+    public Guid? GuestId { get; set; }
 
-        public OrderStatus Status { get; set; }
-        public PaymentStatus PaymentStatus { get; set; }
+    public OrderStatus Status { get; set; }
+    public PaymentStatus PaymentStatus { get; set; }
 
-        public decimal TotalAmount { get; set; }
+    public decimal TotalAmount { get; set; }
 
-        public int ShippingAddressId { get; set; }
-        public Address ShippingAddress { get; set; } = null!;
+    public int ShippingAddressId { get; set; }
+    public Address ShippingAddress { get; set; } = null!;
 
-        public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
-    }
+    public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }
+

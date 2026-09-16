@@ -28,6 +28,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(o => o.UserId);
+        builder.HasIndex(o => o.GuestId);
         builder.HasIndex(o => o.Status);
     }
 }

@@ -17,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MaleFashion.Infrastructure.Services.Users;
 
 
+
 namespace MaleFashion.Infrastructure;
 
 public static class DependencyInjection

@@ -20,8 +20,8 @@ public class RemoveCartItemCommandHandler : IRequestHandler<RemoveCartItemComman
         var cartItem = await _unitOfWork.Carts.GetCartItemAsync(request.CartItemId)
             ?? throw new NotFoundException(nameof(CartItem), request.CartItemId);
 
-        var isOwner = cartItem.Cart.UserId == request.UserId ||
-                      (cartItem.Cart.GuestId.HasValue && cartItem.Cart.GuestId == request.GuestId);
+        var isOwner = (request.UserId != null && cartItem.Cart.UserId == request.UserId) ||
+                      (request.GuestId.HasValue && cartItem.Cart.GuestId == request.GuestId);
 
         if (!isOwner)
         {

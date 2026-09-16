@@ -6,6 +6,7 @@ namespace MaleFashion.Application.Features.Addresses.Commands.CreateAddress;
 public class CreateAddressCommand : IRequest<AddressDto>
 {
     public string? UserId { get; set; }
+    public Guid? GuestId { get; set; }
     public string FullName { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
     public string Line1 { get; set; } = string.Empty;

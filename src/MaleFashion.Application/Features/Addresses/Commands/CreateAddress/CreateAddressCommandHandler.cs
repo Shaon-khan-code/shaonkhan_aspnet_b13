@@ -23,6 +23,7 @@ public class CreateAddressCommandHandler : IRequestHandler<CreateAddressCommand,
         var address = new Address
         {
             UserId = request.UserId,
+            GuestId = request.GuestId,
             FullName = request.FullName,
             Phone = request.Phone,
             Line1 = request.Line1,
