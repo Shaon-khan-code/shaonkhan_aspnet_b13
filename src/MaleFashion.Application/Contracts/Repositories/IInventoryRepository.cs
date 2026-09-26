@@ -12,4 +12,6 @@ public interface IInventoryRepository : IRepository<Inventory>
         int pageSize);
 
     Task<int> GetLowStockCountAsync();
+
+    Task<List<Inventory>> GetAllLowStockAsync();
 }

@@ -1,4 +1,4 @@
-﻿using MaleFashion.Domain.Common;
+﻿using DomainInventory = MaleFashion.Domain.Entities.Inventory;
 
 namespace MaleFashion.Domain.Entities;
 

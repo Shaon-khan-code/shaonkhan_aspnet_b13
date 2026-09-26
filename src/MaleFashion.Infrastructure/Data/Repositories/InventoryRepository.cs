@@ -35,6 +35,7 @@ public class InventoryRepository : Repository<Inventory>, IInventoryRepository
             query = query.Where(i => i.QuantityInStock - i.ReservedQuantity <= i.ReorderLevel);
         }
 
+
         var totalCount = await query.CountAsync();
 
         var items = await query
@@ -44,5 +45,17 @@ public class InventoryRepository : Repository<Inventory>, IInventoryRepository
             .ToListAsync();
 
         return (items, totalCount);
+
     }
+
+    public async Task<List<Inventory>> GetAllLowStockAsync()
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Include(i => i.Product)
+            .Where(i => i.QuantityInStock - i.ReservedQuantity <= i.ReorderLevel)
+            .OrderBy(i => i.Product.Name)
+            .ToListAsync();
+    }
+
 }
