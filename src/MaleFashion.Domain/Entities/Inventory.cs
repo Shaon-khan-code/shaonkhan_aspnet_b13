@@ -2,7 +2,7 @@
 
 namespace MaleFashion.Domain.Entities;
 
-public class Inventory : BaseEntity
+public class Inventory : Common.BaseEntity
 {
     public int ProductId { get; set; }
     public Product Product { get; set; } = null!;

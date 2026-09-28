@@ -1,7 +1,7 @@
 ﻿using MaleFashion.Application.Contracts.Repositories;
 using MaleFashion.Application.Features.Inventory.Queries.GetLowStockProducts;
 using MaleFashion.Application.Tests.Common;
-using MaleFashion.Domain.Entities;
+using DomainInventory = MaleFashion.Domain.Entities.Inventory;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Shouldly;
@@ -30,7 +30,7 @@ public class GetLowStockProductsQueryHandlerTests
     {
         Id = productId,
         ProductId = productId,
-        Product = new Product { Id = productId, Name = name, Sku = sku, CategoryId = 1 },
+        Product = new Domain.Entities.Product { Id = productId, Name = name, Sku = sku, CategoryId = 1 },
         QuantityInStock = inStock,
         ReservedQuantity = reserved,
         ReorderLevel = reorderLevel
@@ -43,11 +43,11 @@ public class GetLowStockProductsQueryHandlerTests
     {
         var items = new List<DomainInventory>();
         {
-            LowStockItem(1, "Cotton Shirt", "SKU-001", inStock: 2, reserved: 0, reorderLevel: 10),
-            LowStockItem(2, "Denim Jeans", "SKU-002", inStock: 5, reserved: 3, reorderLevel: 5)
+            LowStockItem(1, "Cotton Shirt", "SKU-001", inStock: 2, reserved: 0, reorderLevel: 10);
+            LowStockItem(2, "Denim Jeans", "SKU-002", inStock: 5, reserved: 3, reorderLevel: 5);
         };
 
-        _inventoryRepositoryMock.Setup(r => r.GetAllLowStockAsync()).ReturnsAsync(new List<DomainInventory>();
+        _inventoryRepositoryMock.Setup(r => r.GetAllLowStockAsync()).ReturnsAsync(new List<DomainInventory>());
 
         var result = await _handler.Handle(new GetLowStockProductsQuery(), CancellationToken.None);
 
@@ -62,10 +62,10 @@ public class GetLowStockProductsQueryHandlerTests
     [Fact]
     public async Task Handle_LowStockItemsExist_CallsRepositoryExactlyOnce()
     {
-        _inventoryRepositoryMock.Setup(r => r.GetAllLowStockAsync()).ReturnsAsync(new List<DomainInventory>());
-        {
+        _inventoryRepositoryMock.Setup(r => r.GetAllLowStockAsync()).ReturnsAsync(new List<DomainInventory>
+            {
             LowStockItem(1, "Cotton Shirt", "SKU-001", inStock: 1, reserved: 0, reorderLevel: 5)
-        });
+            });
 
         await _handler.Handle(new GetLowStockProductsQuery(), CancellationToken.None);
 
@@ -77,7 +77,7 @@ public class GetLowStockProductsQueryHandlerTests
     [Fact]
     public async Task Handle_NoLowStockItems_ReturnsEmptyList()
     {
-        _inventoryRepositoryMock.Setup(r => r.GetAllLowStockAsync()).ReturnsAsync(new List<Inventory>());
+        _inventoryRepositoryMock.Setup(r => r.GetAllLowStockAsync()).ReturnsAsync(new List<DomainInventory>());
 
         var result = await _handler.Handle(new GetLowStockProductsQuery(), CancellationToken.None);
 

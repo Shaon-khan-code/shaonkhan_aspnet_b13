@@ -1,9 +1,16 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<RootNamespace>MaleFashion.Worker</RootNamespace>
+		<UserSecretsId>dotnet-MaleFashion.Worker</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\MaleFashion.Application\MaleFashion.Application.csproj" />
+		<ProjectReference Include="..\MaleFashion.Infrastructure\MaleFashion.Infrastructure.csproj" />
+	</ItemGroup>
 
 </Project>

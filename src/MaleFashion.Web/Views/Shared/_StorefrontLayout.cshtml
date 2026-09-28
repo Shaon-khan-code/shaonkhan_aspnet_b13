@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - MaleFashion</title>
+
+    
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="~/storefront/css/bootstrap.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/storefront/css/font-awesome.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/storefront/css/elegant-icons.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/storefront/css/magnific-popup.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/storefront/css/nice-select.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/storefront/css/owl.carousel.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/storefront/css/slicknav.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/storefront/css/style.css" asp-append-version="true" />
+    
+</head>
+<body>
+
+    <partial name="_StorefrontHeader" />
+
+    <main role="main">
+        @RenderBody()
+    </main>
+
+    <partial name="_StorefrontFooter" />
+
+    <!-- PLACEHOLDER: replace with real template JS links once uploaded -->
+
+    <script src="~/storefront/js/jquery-3.3.1.min.js"></script>
+    <script src="~/storefront/js/bootstrap.min.js"></script>
+    <script src="~/storefront/js/jquery.nice-select.min.js"></script>
+    <script src="~/storefront/js/jquery.nicescroll.min.js"></script>
+    <script src="~/storefront/js/jquery.magnific-popup.min.js"></script>
+    <script src="~/storefront/js/jquery.countdown.min.js"></script>
+    <script src="~/storefront/js/jquery.slicknav.js"></script>
+    <script src="~/storefront/js/mixitup.min.js"></script>
+    <script src="~/storefront/js/owl.carousel.min.js"></script>
+    <script src="~/storefront/js/main.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

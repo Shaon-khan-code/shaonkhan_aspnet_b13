@@ -49,6 +49,8 @@ public static class DependencyInjection
         services.AddScoped<IAddressRepository, AddressRepository>();
         services.AddScoped<ISimulatedPaymentService, SimulatedCardPaymentService>();
         services.AddScoped<IUserStatisticsService, UserStatisticsService>();
+        
+
 
 
         services.AddSingleton<IAmazonS3>(sp =>
