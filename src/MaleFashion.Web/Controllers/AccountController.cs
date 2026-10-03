@@ -6,26 +6,30 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
-
 namespace MaleFashion.Web.Controllers;
 
 public class AccountController : Controller
 {
+    private const string RecaptchaFailedMessage = "reCAPTCHA verification failed. Please try again.";
+
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IEmailService _emailService;
+    private readonly IRecaptchaService _recaptchaService;
 
     public AccountController(
-     UserManager<ApplicationUser> userManager,
-     SignInManager<ApplicationUser> signInManager,
-     IEmailService emailService,
-     IRecaptchaService recaptchaService)
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        IEmailService emailService,
+        IRecaptchaService recaptchaService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _emailService = emailService;
         _recaptchaService = recaptchaService;
     }
+
+    // ---------------- Register ----------------
 
     [HttpGet]
     public IActionResult Register()
@@ -39,6 +43,13 @@ public class AccountController : Controller
     {
         if (!ModelState.IsValid)
         {
+            return View(model);
+        }
+
+        // reCAPTCHA v3 (action name must match grecaptcha.execute(..., { action: 'register' }))
+        if (!await _recaptchaService.VerifyAsync(model.RecaptchaToken, "register"))
+        {
+            ModelState.AddModelError(string.Empty, RecaptchaFailedMessage);
             return View(model);
         }
 
@@ -74,6 +85,8 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Home");
     }
 
+    // ---------------- Login ----------------
+
     [HttpGet]
     public IActionResult Login(string? returnUrl = null)
     {
@@ -86,6 +99,13 @@ public class AccountController : Controller
     {
         if (!ModelState.IsValid)
         {
+            return View(model);
+        }
+
+        // reCAPTCHA v3
+        if (!await _recaptchaService.VerifyAsync(model.RecaptchaToken, "login"))
+        {
+            ModelState.AddModelError(string.Empty, RecaptchaFailedMessage);
             return View(model);
         }
 
@@ -112,16 +132,19 @@ public class AccountController : Controller
 
         if (await _userManager.IsInRoleAsync(user, RoleNames.Admin))
         {
-            // TODO: once Areas/Admin/DashboardController exists, change this to:
-            // return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
         }
 
         return RedirectToAction("Index", "Home");
     }
 
-   
+    // ---------------- Forgot / Reset password ----------------
 
+    [HttpGet]
+    public IActionResult ForgotPassword()
+    {
+        return View(new ForgotPasswordViewModel());
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -198,6 +221,7 @@ public class AccountController : Controller
         return View("ResetPasswordConfirmation");
     }
 
+    // ---------------- Change password ----------------
 
     [Authorize]
     [HttpGet]
@@ -238,9 +262,9 @@ public class AccountController : Controller
         TempData["ChangePasswordSuccess"] = "Your password has been changed successfully.";
         return RedirectToAction(nameof(ChangePassword));
     }
-    private readonly IRecaptchaService _recaptchaService;
 
-    
+    // ---------------- Logout ----------------
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
@@ -249,6 +273,4 @@ public class AccountController : Controller
         Response.Cookies.Delete("MaleFashion.GuestCartId");
         return RedirectToAction("Index", "Home");
     }
-
-
 }

@@ -29,6 +29,9 @@
                 <label asp-for="RememberMe" class="form-check-label"></label>
             </div>
 
+            @* reCAPTCHA v3: must be INSIDE the form *@
+            <partial name="_RecaptchaV3Partial" model='"login"' />
+
             <button type="submit" class="btn btn-primary">Login</button>
         </form>
     </div>
@@ -38,11 +41,4 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-};
-
-// Login POST
-if (!await _recaptchaService.VerifyAsync(model.RecaptchaToken, "login"))
-{
-ModelState.AddModelError(string.Empty, "reCAPTCHA verification failed. Please try again.");
-return View(model);
 }

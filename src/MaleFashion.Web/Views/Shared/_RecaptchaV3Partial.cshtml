@@ -1,0 +1,39 @@
+﻿@using Microsoft.Extensions.Options
+@using MaleFashion.Infrastructure.Options
+@inject IOptions<RecaptchaOptions> RecaptchaConfig
+@model string
+@{
+    // Model = reCAPTCHA action name, e.g. "login", "register", "contact"
+    var siteKey = RecaptchaConfig.Value.SiteKey;
+    var action = string.IsNullOrWhiteSpace(Model) ? "submit" : Model;
+    var fieldId = "RecaptchaToken_" + action;
+}
+
+@if (!string.IsNullOrWhiteSpace(siteKey))
+{
+    <input type="hidden" name="RecaptchaToken" id="@fieldId" />
+
+    <script src="https://www.google.com/recaptcha/api.js?render=@siteKey"></script>
+    <script>
+        (function () {
+        var field = document.getElementById('@fieldId');
+        if (!field || !field.form) return;
+        var form = field.form;
+        var submitting = false;
+
+        form.addEventListener('submit', function (e) {
+        if (submitting) return;                 // token already attached, let it go
+        e.preventDefault();
+
+        // Token is generated at submit time (it expires after ~2 minutes)
+        grecaptcha.ready(function () {
+        grecaptcha.execute('@siteKey', { action: '@action' }).then(function (token) {
+        field.value = token;
+        submitting = true;
+        form.submit();
+        });
+        });
+        });
+        })();
+    </script>
+}

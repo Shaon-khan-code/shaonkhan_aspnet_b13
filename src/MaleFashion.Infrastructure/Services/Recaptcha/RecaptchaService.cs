@@ -31,6 +31,7 @@ public class RecaptchaService : IRecaptchaService
 
         if (string.IsNullOrWhiteSpace(token))
         {
+            _logger.LogWarning("reCAPTCHA token was empty for action {Action}.", action);
             return false;
         }
 
@@ -55,8 +56,27 @@ public class RecaptchaService : IRecaptchaService
             var score = root.TryGetProperty("score", out var sc) ? sc.GetDouble() : 0.0;
             var returnedAction = root.TryGetProperty("action", out var a) ? a.GetString() : null;
 
+            // Google's error codes (e.g. invalid-input-secret, timeout-or-duplicate) help debugging
+            string? errorCodes = null;
+            if (root.TryGetProperty("error-codes", out var errs) && errs.ValueKind == JsonValueKind.Array)
+            {
+                errorCodes = string.Join(", ", errs.EnumerateArray().Select(e => e.GetString()));
+            }
+
+            // Must stay INSIDE the try block: these variables only exist here.
+            _logger.LogInformation(
+                "reCAPTCHA result: success={Success}, score={Score}, action={ReturnedAction} (expected {ExpectedAction}), errors={Errors}",
+                success, score, returnedAction, action, errorCodes);
+
             return success && score >= _options.MinimumScore && returnedAction == action;
+
+            if (!_options.Enabled)
+            {
+                _logger.LogWarning("reCAPTCHA is DISABLED (Recaptcha:Enabled=false). Allowing request for action {Action}.", action);
+                return true;
+            }
         }
+
         catch (Exception ex)
         {
             _logger.LogError(ex, "reCAPTCHA verification request failed.");

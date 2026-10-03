@@ -49,7 +49,9 @@ public static class DependencyInjection
         services.AddScoped<IAddressRepository, AddressRepository>();
         services.AddScoped<ISimulatedPaymentService, SimulatedCardPaymentService>();
         services.AddScoped<IUserStatisticsService, UserStatisticsService>();
-        
+        services.Configure<RecaptchaOptions>(configuration.GetSection("Recaptcha"));
+        services.AddHttpClient<IRecaptchaService, RecaptchaService>();
+
 
 
 

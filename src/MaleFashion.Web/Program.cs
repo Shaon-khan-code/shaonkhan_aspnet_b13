@@ -1,9 +1,12 @@
 using FluentValidation;
 using MaleFashion.Application;
 using MaleFashion.Application.Common.Models;
+using MaleFashion.Application.Contracts.Services;   // IRecaptchaService
 using MaleFashion.Infrastructure;
 using MaleFashion.Infrastructure.Identity;
 using MaleFashion.Infrastructure.Options;
+using MaleFashion.Infrastructure.Services;           // RecaptchaService (namespace ঠিক না হলে বদলে নাও)
+using MaleFashion.Infrastructure.Services.Recaptcha;
 using MaleFashion.Web.Middleware;
 using MaleFashion.Web.ViewModels.Account;
 using Microsoft.AspNetCore.Identity;
@@ -45,7 +48,7 @@ try
             .Destructure.ByTransforming<EmailOptions>(o => new { o.Host, o.FromEmail });
     });
 
-    builder.Services.AddControllersWithViews();
+    // একবারই থাকবে (আগে দুইবার ছিল)
     builder.Services.AddControllersWithViews(options =>
     {
         options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
@@ -54,9 +57,14 @@ try
     builder.Services.AddApplicationServices();
     builder.Services.AddInfrastructureServices(builder.Configuration);
 
+    // ---- reCAPTCHA v3 ----
+    // যদি AddInfrastructureServices এর ভেতরে এগুলো আগে থেকেই থাকে, এখানকার দুই লাইন মুছে দাও।
+    builder.Services.Configure<RecaptchaOptions>(builder.Configuration.GetSection("Recaptcha"));
+    builder.Services.AddHttpClient<IRecaptchaService, RecaptchaService>();
+
     var app = builder.Build();
 
-    app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+    //app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
     if (!app.Environment.IsDevelopment())
     {
@@ -73,11 +81,13 @@ try
     app.UseAuthorization();
 
     app.MapStaticAssets();
-    
+
+    // /admin খুললে Admin এরিয়ার Dashboard খুলবে
     app.MapControllerRoute(
         name: "areas",
-        pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}")
+        pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}")
         .WithStaticAssets();
+
     app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}")
