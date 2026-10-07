@@ -1,11 +1,11 @@
 using FluentValidation;
 using MaleFashion.Application;
 using MaleFashion.Application.Common.Models;
-using MaleFashion.Application.Contracts.Services;   // IRecaptchaService
+using MaleFashion.Application.Contracts.Services;   
 using MaleFashion.Infrastructure;
 using MaleFashion.Infrastructure.Identity;
 using MaleFashion.Infrastructure.Options;
-using MaleFashion.Infrastructure.Services;           // RecaptchaService (namespace ঠিক না হলে বদলে নাও)
+using MaleFashion.Infrastructure.Services;           
 using MaleFashion.Infrastructure.Services.Recaptcha;
 using MaleFashion.Web.Middleware;
 using MaleFashion.Web.ViewModels.Account;
@@ -13,9 +13,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Serilog;
-
-// Bootstrap logger: captures any startup failure before the full host/config
-// is built. Replaced by the fully-configured Serilog logger once the host starts.
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .CreateBootstrapLogger();
@@ -30,9 +27,7 @@ try
             .ReadFrom.Configuration(context.Configuration)
             .ReadFrom.Services(services)
             .Enrich.FromLogContext()
-            // Defensive masking: if any of these types are ever logged
-            // directly (e.g. "{@Card}"), sensitive fields are redacted
-            // rather than relying on every call site to remember not to.
+            
             .Destructure.ByTransforming<SimulatedCardDetails>(c => new
             {
                 c.CardholderName,
@@ -57,14 +52,13 @@ try
     builder.Services.AddApplicationServices();
     builder.Services.AddInfrastructureServices(builder.Configuration);
 
-    // ---- reCAPTCHA v3 ----
-    // যদি AddInfrastructureServices এর ভেতরে এগুলো আগে থেকেই থাকে, এখানকার দুই লাইন মুছে দাও।
+    
     builder.Services.Configure<RecaptchaOptions>(builder.Configuration.GetSection("Recaptcha"));
     builder.Services.AddHttpClient<IRecaptchaService, RecaptchaService>();
 
     var app = builder.Build();
 
-    //app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+    
 
     if (!app.Environment.IsDevelopment())
     {
@@ -82,7 +76,6 @@ try
 
     app.MapStaticAssets();
 
-    // /admin খুললে Admin এরিয়ার Dashboard খুলবে
     app.MapControllerRoute(
         name: "areas",
         pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}")

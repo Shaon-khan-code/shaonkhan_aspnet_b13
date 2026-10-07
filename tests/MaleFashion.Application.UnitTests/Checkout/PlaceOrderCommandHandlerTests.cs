@@ -30,6 +30,17 @@ public class PlaceOrderCommandHandlerTests
         _orderRepositoryMock = Mock.Get(_unitOfWorkMock.Object.Orders);
         _paymentServiceMock = new Mock<ISimulatedPaymentService>();
 
+        // FIX: Moq returns null (not Task.CompletedTask) for any Task-returning
+        // method that has no explicit Setup. Awaiting that null Task throws
+        // NullReferenceException. TestUnitOfWorkFactory doesn't configure these,
+        // so every happy-path test that reaches the transaction/save calls was
+        // failing. Giving them explicit, real completions here fixes that for
+        // this test class regardless of what the shared factory does.
+        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync()).Returns(Task.CompletedTask);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.CommitTransactionAsync()).Returns(Task.CompletedTask);
+        _unitOfWorkMock.Setup(u => u.RollbackTransactionAsync()).Returns(Task.CompletedTask);
+        _orderRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Order>())).Returns(Task.CompletedTask);
         var mapper = TestUnitOfWorkFactory.CreateRealMapper();
 
         _handler = new PlaceOrderCommandHandler(_unitOfWorkMock.Object, _paymentServiceMock.Object, mapper);

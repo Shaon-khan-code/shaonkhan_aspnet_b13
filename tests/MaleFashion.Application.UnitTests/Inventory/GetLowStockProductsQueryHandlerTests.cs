@@ -41,13 +41,16 @@ public class GetLowStockProductsQueryHandlerTests
     [Fact]
     public async Task Handle_LowStockItemsExist_ReturnsCorrectlyMappedList()
     {
-        var items = new List<DomainInventory>();
+        // FIX: the two items were being created and discarded instead of
+        // being added to the list, and the mock was returning an empty
+        // list regardless. Both are fixed below.
+        var items = new List<DomainInventory>
         {
-            LowStockItem(1, "Cotton Shirt", "SKU-001", inStock: 2, reserved: 0, reorderLevel: 10);
-            LowStockItem(2, "Denim Jeans", "SKU-002", inStock: 5, reserved: 3, reorderLevel: 5);
+            LowStockItem(1, "Cotton Shirt", "SKU-001", inStock: 2, reserved: 0, reorderLevel: 10),
+            LowStockItem(2, "Denim Jeans", "SKU-002", inStock: 5, reserved: 3, reorderLevel: 5)
         };
 
-        _inventoryRepositoryMock.Setup(r => r.GetAllLowStockAsync()).ReturnsAsync(new List<DomainInventory>());
+        _inventoryRepositoryMock.Setup(r => r.GetAllLowStockAsync()).ReturnsAsync(items);
 
         var result = await _handler.Handle(new GetLowStockProductsQuery(), CancellationToken.None);
 

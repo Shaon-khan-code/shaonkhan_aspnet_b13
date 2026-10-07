@@ -23,6 +23,14 @@ public class RecaptchaService : IRecaptchaService
 
     public async Task<bool> VerifyAsync(string token, string action, CancellationToken cancellationToken = default)
     {
+        // Checked first, before anything else: when reCAPTCHA is turned off
+        // (Recaptcha:Enabled = false), skip verification entirely.
+        if (!_options.Enabled)
+        {
+            _logger.LogWarning("reCAPTCHA is DISABLED (Recaptcha:Enabled=false). Allowing request for action {Action}.", action);
+            return true;
+        }
+
         if (string.IsNullOrWhiteSpace(_options.SecretKey))
         {
             _logger.LogWarning("reCAPTCHA is not configured (Recaptcha:SecretKey missing). Verification skipped (failing closed).");
@@ -63,20 +71,12 @@ public class RecaptchaService : IRecaptchaService
                 errorCodes = string.Join(", ", errs.EnumerateArray().Select(e => e.GetString()));
             }
 
-            // Must stay INSIDE the try block: these variables only exist here.
             _logger.LogInformation(
                 "reCAPTCHA result: success={Success}, score={Score}, action={ReturnedAction} (expected {ExpectedAction}), errors={Errors}",
                 success, score, returnedAction, action, errorCodes);
 
             return success && score >= _options.MinimumScore && returnedAction == action;
-
-            if (!_options.Enabled)
-            {
-                _logger.LogWarning("reCAPTCHA is DISABLED (Recaptcha:Enabled=false). Allowing request for action {Action}.", action);
-                return true;
-            }
         }
-
         catch (Exception ex)
         {
             _logger.LogError(ex, "reCAPTCHA verification request failed.");
