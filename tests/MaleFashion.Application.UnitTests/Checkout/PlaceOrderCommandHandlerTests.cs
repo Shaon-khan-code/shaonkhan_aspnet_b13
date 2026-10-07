@@ -30,24 +30,19 @@ public class PlaceOrderCommandHandlerTests
         _orderRepositoryMock = Mock.Get(_unitOfWorkMock.Object.Orders);
         _paymentServiceMock = new Mock<ISimulatedPaymentService>();
 
-        // FIX: Moq returns null (not Task.CompletedTask) for any Task-returning
-        // method that has no explicit Setup. Awaiting that null Task throws
-        // NullReferenceException. TestUnitOfWorkFactory doesn't configure these,
-        // so every happy-path test that reaches the transaction/save calls was
-        // failing. Giving them explicit, real completions here fixes that for
-        // this test class regardless of what the shared factory does.
+        
         _unitOfWorkMock.Setup(u => u.BeginTransactionAsync()).Returns(Task.CompletedTask);
         _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _unitOfWorkMock.Setup(u => u.CommitTransactionAsync()).Returns(Task.CompletedTask);
         _unitOfWorkMock.Setup(u => u.RollbackTransactionAsync()).Returns(Task.CompletedTask);
         _orderRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Order>())).Returns(Task.CompletedTask);
+
         var mapper = TestUnitOfWorkFactory.CreateRealMapper();
 
         _handler = new PlaceOrderCommandHandler(_unitOfWorkMock.Object, _paymentServiceMock.Object, mapper);
     }
 
-    // ---- Shared test data builders ----
-
+    
     private static Address ValidAddress(string? userId = "user-1") => new()
     {
         Id = 10,
@@ -108,12 +103,34 @@ public class PlaceOrderCommandHandlerTests
 
     private void SetupSuccessfulPayment(decimal? expectedAmount = null)
     {
-        _paymentServiceMock
-            .Setup(p => p.ChargeAsync(
-                It.IsAny<SimulatedCardDetails>(),
-                expectedAmount.HasValue ? expectedAmount.Value : It.IsAny<decimal>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PaymentResult { Success = true, TransactionId = "SIM-TEST-123" });
+        // FIX #2: It.IsAny<decimal>() hidden inside a ternary is not
+        // recognized by Moq as a matcher — Moq only special-cases It.Is/
+        // It.IsAny calls that appear directly as an argument expression.
+        // Wrapped in a conditional, the whole expression gets evaluated as
+        // a plain value instead (It.IsAny<decimal>() called outside Setup
+        // just returns default(decimal) = 0m), so the Setup silently only
+        // matched amount == 0m and never matched any real order total.
+        // Splitting into two explicit branches keeps the matcher calls direct.
+        var result = new PaymentResult { Success = true, TransactionId = "SIM-TEST-123" };
+
+        if (expectedAmount.HasValue)
+        {
+            _paymentServiceMock
+                .Setup(p => p.ChargeAsync(
+                    It.IsAny<SimulatedCardDetails>(),
+                    expectedAmount.Value,
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(result);
+        }
+        else
+        {
+            _paymentServiceMock
+                .Setup(p => p.ChargeAsync(
+                    It.IsAny<SimulatedCardDetails>(),
+                    It.IsAny<decimal>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(result);
+        }
     }
 
     // ---- 1. Successful order ----
