@@ -45,6 +45,9 @@ namespace MaleFashion.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<Guid?>("GuestId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Line1")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -72,6 +75,8 @@ namespace MaleFashion.Infrastructure.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GuestId");
 
                     b.HasIndex("UserId");
 
@@ -227,6 +232,9 @@ namespace MaleFashion.Infrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("GuestId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("OrderNumber")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -255,6 +263,8 @@ namespace MaleFashion.Infrastructure.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GuestId");
 
                     b.HasIndex("OrderNumber")
                         .IsUnique();

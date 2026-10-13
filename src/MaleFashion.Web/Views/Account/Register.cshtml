@@ -45,9 +45,3 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }
-// Register POST
-if (!await _recaptchaService.VerifyAsync(model.RecaptchaToken, "register"))
-{
-ModelState.AddModelError(string.Empty, "reCAPTCHA verification failed. Please try again.");
-return View(model);
-}
