@@ -1,0 +1,59 @@
+﻿@model MaleFashion.Web.ViewComponents.FeaturedProductsViewModel
+@{
+    var tabs = new[]
+    {
+        (Key: "best", Label: "Best Sellers", Items: Model.BestSellers),
+        (Key: "new",  Label: "New Arrivals", Items: Model.NewArrivals),
+        (Key: "hot",  Label: "Hot Sales",    Items: Model.HotSales)
+    };
+}
+
+<section class="product spad">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <ul class="filter__controls">
+                    @for (var i = 0; i < tabs.Length; i++)
+                    {
+                        <li class="@(i == 0 ? "active" : "")" data-tab="@tabs[i].Key">@tabs[i].Label</li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        @for (var i = 0; i < tabs.Length; i++)
+        {
+            <div class="row" data-tab-panel="@tabs[i].Key" hidden="@(i != 0)">
+                @if (tabs[i].Items.Count == 0)
+                {
+                    <div class="col-lg-12 text-center py-5">
+                        <p>No products in this section yet.</p>
+                        <a asp-controller="Shop" asp-action="Index" class="primary-btn">Browse the shop</a>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var product in tabs[i].Items)
+                    {
+                        <partial name="~/Views/Shared/Components/FeaturedProducts/_ProductCard.cshtml" model="product" />
+                    }
+                }
+            </div>
+        }
+    </div>
+</section>
+
+<script>
+    (function () {
+        var tabs = document.querySelectorAll('.filter__controls li[data-tab]');
+        var panels = document.querySelectorAll('[data-tab-panel]');
+        tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                tabs.forEach(function (t) { t.classList.toggle('active', t === tab); });
+                panels.forEach(function (p) {
+                    p.hidden = p.getAttribute('data-tab-panel') !== tab.getAttribute('data-tab');
+                });
+            });
+        });
+    })();
+</script>

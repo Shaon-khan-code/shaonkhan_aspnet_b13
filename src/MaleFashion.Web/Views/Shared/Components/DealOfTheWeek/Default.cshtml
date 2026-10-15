@@ -1,0 +1,62 @@
+﻿@using MaleFashion.Web.Helpers
+@model MaleFashion.Web.ViewComponents.DealOfTheWeekViewModel
+@{
+    var product = Model.Product;
+    var name = product.GetText("Name", "ProductName", "Title");
+    var price = product.GetDecimal("Price", "UnitPrice", "BasePrice") ?? 0m;
+    var discount = product.GetDecimal("DiscountPrice", "SalePrice", "DiscountedPrice");
+    var shown = product.IsOnSale() && discount.HasValue ? discount.Value : price;
+    var image = ModelReader.ProductImage(product.Get("ImageKey", "ImageUrl", "ImagePath", "MainImageUrl", "ThumbnailUrl", "Image"));
+}
+
+<div class="col-lg-4">
+    <div class="categories__hot__deal">
+        <img src="@image" alt="@name" style="width:100%;height:420px;object-fit:cover;">
+        <div class="hot__deal__sticker">
+            <span>Sale Of</span>
+            <h5>@ModelReader.Money(shown)</h5>
+        </div>
+    </div>
+</div>
+<div class="col-lg-4 offset-lg-1">
+    <div class="categories__deal__countdown">
+        <span>Deal Of The Week</span>
+        <h2>@name</h2>
+        <div class="categories__deal__countdown__timer" id="dealCountdown" data-deadline="@Model.DeadlineUtc.ToString("o")">
+            <div class="cd-item"><span data-unit="days">0</span><p>Days</p></div>
+            <div class="cd-item"><span data-unit="hours">00</span><p>Hours</p></div>
+            <div class="cd-item"><span data-unit="minutes">00</span><p>Minutes</p></div>
+            <div class="cd-item"><span data-unit="seconds">00</span><p>Seconds</p></div>
+        </div>
+        <a asp-controller="Shop" asp-action="Index" asp-route-searchTerm="@name" class="primary-btn">Shop now</a>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var el = document.getElementById('dealCountdown');
+        if (!el) return;
+
+        var end = new Date(el.getAttribute('data-deadline')).getTime();
+        var spans = el.querySelectorAll('[data-unit]');
+
+        function pad(n) { return n < 10 ? '0' + n : String(n); }
+
+        function tick() {
+            var s = Math.floor(Math.max(0, end - Date.now()) / 1000);
+            var values = {
+                days: Math.floor(s / 86400),
+                hours: Math.floor((s % 86400) / 3600),
+                minutes: Math.floor((s % 3600) / 60),
+                seconds: s % 60
+            };
+            spans.forEach(function (span) {
+                var unit = span.getAttribute('data-unit');
+                span.textContent = unit === 'days' ? values[unit] : pad(values[unit]);
+            });
+        }
+
+        tick();
+        setInterval(tick, 1000);
+    })();
+</script>

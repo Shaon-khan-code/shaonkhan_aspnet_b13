@@ -1,42 +1,117 @@
-﻿@model List<MaleFashion.Application.DTOs.OrderSummaryDto>
-
+﻿@using System.Globalization
+@model List<MaleFashion.Application.DTOs.OrderSummaryDto>
 @{
     ViewData["Title"] = "My Orders";
 }
 
-<h1>My Orders</h1>
+<style>
+    .order-pill {
+        display: inline-block;
+        padding: 3px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 700;
+        background: #eceae4;
+        color: #444;
+        text-transform: capitalize;
+    }
 
-@if (!Model.Any())
-{
-    <p>You haven't placed any orders yet. <a asp-controller="Shop" asp-action="Index">Start shopping</a>.</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Order #</th>
-                <th>Date</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Payment</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var order in Model)
-            {
-                <tr>
-                    <td>@order.OrderNumber</td>
-                    <td>@order.CreatedAt.ToString("g")</td>
-                    <td>@order.ItemCount</td>
-                    <td>@order.TotalAmount.ToString("C")</td>
-                    <td><span class="badge bg-info">@order.Status</span></td>
-                    <td><span class="badge bg-secondary">@order.PaymentStatus</span></td>
-                    <td><a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-secondary">View</a></td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+    .order-pill--pending, .order-pill--processing {
+        background: #fff3cd;
+        color: #8a6d00;
+    }
+
+    .order-pill--paid, .order-pill--delivered, .order-pill--completed, .order-pill--shipped {
+        background: #d4edda;
+        color: #1d6b32;
+    }
+
+    .order-pill--cancelled, .order-pill--failed, .order-pill--refunded {
+        background: #f8d7da;
+        color: #9b1c2b;
+    }
+
+    .orders-table {
+        width: 100%;
+    }
+
+        .orders-table th {
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 1px;
+            padding: 14px 10px;
+            border-bottom: 1px solid #e5e5e5;
+            text-align: left;
+        }
+
+        .orders-table td {
+            padding: 18px 10px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+        }
+</style>
+
+<!-- Breadcrumb Section Begin -->
+<section class="breadcrumb-option">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="breadcrumb__text">
+                    <h4>My Orders</h4>
+                    <div class="breadcrumb__links">
+                        <a asp-controller="Home" asp-action="Index">Home</a>
+                        <span>My Orders</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Breadcrumb Section End -->
+
+<section class="spad">
+    <div class="container">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <h4>No orders yet</h4>
+                <p class="mb-4">You haven't placed any orders yet.</p>
+                <a asp-controller="Shop" asp-action="Index" class="primary-btn">Start shopping</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Date</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model)
+                        {
+                            var status = order.Status.ToString()!;
+                            var payment = order.PaymentStatus.ToString()!;
+                            <tr>
+                                <td><strong>@order.OrderNumber</strong></td>
+                                <td>@order.CreatedAt.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)</td>
+                                <td>@order.ItemCount</td>
+                                <td>$@order.TotalAmount.ToString("N2", CultureInfo.InvariantCulture)</td>
+                                <td><span class="order-pill order-pill--@status.ToLowerInvariant()">@status</span></td>
+                                <td><span class="order-pill order-pill--@payment.ToLowerInvariant()">@payment</span></td>
+                                <td><a asp-action="Details" asp-route-id="@order.Id" style="font-weight:700;">View</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</section>

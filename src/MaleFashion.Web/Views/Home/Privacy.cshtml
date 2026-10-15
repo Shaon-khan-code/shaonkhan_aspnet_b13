@@ -1,6 +1,69 @@
 ﻿@{
     ViewData["Title"] = "Privacy Policy";
-}
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+    const string lastUpdated = "15 October 2026";
+
+    var sections = new[]
+    {
+        (Title: "1. Information we collect",
+         Text: "When you create an account we collect your name, email address and a securely hashed password. When you place an order we also collect your delivery address and phone number. If you contact us we keep the message you send. We do not ask for more information than we need to run the store."),
+        (Title: "2. How we use your information",
+         Text: "We use your information to create and secure your account, process and deliver your orders, send order and password-reset emails, answer your messages, and keep the shop safe from fraud and abuse. We do not sell your personal information."),
+        (Title: "3. Cookies",
+         Text: "We use a small number of essential cookies: a sign-in cookie that keeps you logged in, a security cookie that protects forms against forgery, and a cart cookie (MaleFashion.GuestCartId) that remembers your basket for up to 30 days when you are not signed in. These cookies are required for the shop to work."),
+        (Title: "4. Spam protection",
+         Text: "Our sign-in, registration and contact forms use Google reCAPTCHA to tell people and bots apart. reCAPTCHA collects hardware and software information and sends it to Google, which handles it under Google's own privacy policy."),
+        (Title: "5. Sharing your information",
+         Text: "We only share information with service providers that help us operate the shop, such as email delivery, hosting and file storage, and only as far as needed to provide their service. We may also disclose information when the law requires it."),
+        (Title: "6. How long we keep it",
+         Text: "We keep account and order information for as long as your account is open and for the period we are required to keep order records. Contact messages are kept only as long as needed to respond to you."),
+        (Title: "7. Your choices and rights",
+         Text: "You can change your password at any time from your account menu. You may ask us to access, correct or delete the personal information we hold about you, and to stop non-essential processing, by contacting us."),
+        (Title: "8. Security",
+         Text: "Passwords are stored as one-way hashes, traffic is protected with HTTPS and our forms are protected against cross-site request forgery. No system is perfectly secure, so please use a strong, unique password.")
+    };
+}
+
+<!-- Breadcrumb Section Begin -->
+<section class="breadcrumb-option">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="breadcrumb__text">
+                    <h4>Privacy Policy</h4>
+                    <div class="breadcrumb__links">
+                        <a asp-controller="Home" asp-action="Index">Home</a>
+                        <span>Privacy Policy</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Breadcrumb Section End -->
+
+<section class="spad">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2">
+                <p class="text-muted">Last updated: @lastUpdated</p>
+                <p>
+                    This policy explains what personal information MaleFashion collects, why we collect it and the
+                    choices you have. By using our shop you agree to the practices described here.
+                </p>
+
+                @foreach (var policy in sections)
+                {
+                    <h4 class="mt-4 mb-2">@policy.Title</h4>
+                    <p>@policy.Text</p>
+                }
+
+                <h4 class="mt-4 mb-2">9. Contact us</h4>
+                <p>
+                    Questions about this policy or your information? Reach us through our
+                    <a asp-controller="Contact" asp-action="Index">contact page</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>

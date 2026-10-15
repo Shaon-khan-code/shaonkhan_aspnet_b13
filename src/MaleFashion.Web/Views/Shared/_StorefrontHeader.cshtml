@@ -1,28 +1,647 @@
-﻿<header class="storefront-header">
-    <nav class="navbar">
-        <a class="navbar-brand" asp-controller="Home" asp-action="Index">MaleFashion</a>
+﻿@{
+    var current = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    string Active(params string[] names) =>
+        names.Any(n => string.Equals(n, current, StringComparison.OrdinalIgnoreCase)) ? "active" : "";
 
-        <ul class="navbar-nav">
-            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
-            <!-- PLACEHOLDER: Shop link will be enabled once ShopController exists -->
-            <li><a href="#">Shop</a></li>
-        </ul>
+    var isAuth = User.Identity?.IsAuthenticated == true;
+    var rawName = User.Identity?.Name ?? "";
+    var displayName = rawName.Contains('@') ? rawName.Split('@')[0] : rawName;
+    var initial = displayName.Length > 0 ? char.ToUpper(displayName[0]).ToString() : "U";
+}
 
-        <ul class="navbar-actions">
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <li>
-                    <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                        <button type="submit" class="btn-link">Logout</button>
-                    </form>
-                </li>
+<style>
+    .sf-header {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: #fff;
+        font-family: inherit;
+        box-shadow: 0 0 0 rgba(0,0,0,0);
+        transition: box-shadow .25s;
+    }
+
+        .sf-header.scrolled {
+            box-shadow: 0 4px 18px rgba(0,0,0,.08);
+        }
+
+        .sf-header ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .sf-header a {
+            text-decoration: none;
+        }
+
+    /* top bar */
+    .sf-topbar {
+        background: #111;
+        color: #fff;
+        font-size: 13px;
+        transition: margin .25s, opacity .25s;
+    }
+
+        .sf-topbar .sf-wrap {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 38px;
+        }
+
+        .sf-topbar a {
+            color: #fff;
+            opacity: .85;
+            margin-left: 18px;
+        }
+
+            .sf-topbar a:hover {
+                opacity: 1;
+                color: #fff;
             }
-            else
-            {
-                <li><a asp-controller="Account" asp-action="Login">Login</a></li>
-                <li><a asp-controller="Account" asp-action="Register">Register</a></li>
+
+    .sf-header.scrolled .sf-topbar {
+        margin-top: -38px;
+        opacity: 0;
+    }
+
+    .sf-wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 15px;
+    }
+
+    /* main bar */
+    .sf-main {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        min-height: 78px;
+        transition: min-height .25s;
+    }
+
+    .sf-header.scrolled .sf-main {
+        min-height: 64px;
+    }
+
+    .sf-brand {
+        font-size: 26px;
+        font-weight: 800;
+        color: #111;
+        justify-self: start;
+        letter-spacing: .3px;
+    }
+
+        .sf-brand span {
+            color: #e53637;
+        }
+
+    /* menu */
+    .sf-menu {
+        display: flex;
+        align-items: center;
+        gap: 38px;
+    }
+
+        .sf-menu > li {
+            position: relative;
+            padding: 24px 0;
+        }
+
+            .sf-menu > li > a {
+                position: relative;
+                display: inline-block;
+                font-size: 16px;
+                font-weight: 500;
+                color: #111;
+                padding-bottom: 4px;
             }
-            <!-- PLACEHOLDER: Cart icon/link will be enabled once CartController exists -->
-        </ul>
-    </nav>
+
+                .sf-menu > li > a::after {
+                    content: "";
+                    position: absolute;
+                    left: 0;
+                    bottom: 0;
+                    width: 100%;
+                    height: 2px;
+                    background: #e53637;
+                    transform: scaleX(0);
+                    transform-origin: left;
+                    transition: transform .25s;
+                }
+
+            .sf-menu > li:hover > a::after, .sf-menu > li.active > a::after {
+                transform: scaleX(1);
+            }
+
+    .sf-caret {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-right: 1.5px solid currentColor;
+        border-bottom: 1.5px solid currentColor;
+        transform: rotate(45deg);
+        margin-left: 7px;
+        position: relative;
+        top: -2px;
+    }
+
+    /* dropdowns */
+    .sf-drop {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        min-width: 190px;
+        background: #fff;
+        border-top: 2px solid #e53637;
+        box-shadow: 0 12px 28px rgba(0,0,0,.12);
+        padding: 8px 0;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(10px);
+        transition: all .2s;
+        z-index: 20;
+    }
+
+        .sf-drop li a, .sf-drop li button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 9px 20px;
+            font-size: 14px;
+            color: #111;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+            .sf-drop li a:hover, .sf-drop li button:hover {
+                color: #e53637;
+                background: #faf5f5;
+            }
+
+        .sf-drop .sf-sep {
+            height: 1px;
+            background: #eee;
+            margin: 6px 0;
+        }
+
+        .sf-drop .sf-hello {
+            padding: 8px 20px 4px;
+            font-size: 12px;
+            color: #888;
+        }
+
+            .sf-drop .sf-hello strong {
+                display: block;
+                color: #111;
+                font-size: 14px;
+            }
+
+    [data-sf-drop]:hover > .sf-drop, [data-sf-drop].open > .sf-drop {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .sf-actions .sf-drop {
+        left: auto;
+        right: 0;
+    }
+
+    /* actions */
+    .sf-actions {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        justify-self: end;
+    }
+
+    .sf-icon-btn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border: none;
+        background: none;
+        color: #111;
+        cursor: pointer;
+        border-radius: 50%;
+        transition: background .2s, color .2s;
+    }
+
+        .sf-icon-btn:hover {
+            background: #f3f2ee;
+            color: #e53637;
+        }
+
+        .sf-icon-btn svg {
+            width: 21px;
+            height: 21px;
+        }
+
+    .sf-badge {
+        position: absolute;
+        top: 0;
+        right: -2px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 9px;
+        background: #e53637;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 18px;
+        text-align: center;
+    }
+
+    .sf-link {
+        font-size: 14px;
+        font-weight: 600;
+        color: #111;
+    }
+
+        .sf-link:hover {
+            color: #e53637;
+        }
+
+    .sf-cta {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #fff !important;
+        background: #111;
+        padding: 10px 20px;
+        transition: background .2s;
+    }
+
+        .sf-cta:hover {
+            background: #e53637;
+        }
+
+    .sf-user {
+        position: relative;
+    }
+
+    .sf-avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #e53637;
+        color: #fff;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        font-size: 15px;
+    }
+
+    /* search bar */
+    .sf-search {
+        max-height: 0;
+        overflow: hidden;
+        background: #f7f6f2;
+        transition: max-height .3s;
+    }
+
+    .sf-header.search-open .sf-search {
+        max-height: 90px;
+    }
+
+    .sf-search form {
+        display: flex;
+        gap: 10px;
+        padding: 18px 0;
+    }
+
+    .sf-search input {
+        flex: 1;
+        height: 44px;
+        padding: 0 16px;
+        border: 1px solid #ddd;
+        background: #fff;
+        font-size: 15px;
+        outline: none;
+    }
+
+        .sf-search input:focus {
+            border-color: #e53637;
+        }
+
+    .sf-search button[type=submit] {
+        padding: 0 26px;
+        border: none;
+        background: #111;
+        color: #fff;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+        .sf-search button[type=submit]:hover {
+            background: #e53637;
+        }
+
+    /* hamburger */
+    .sf-toggle {
+        display: none;
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        padding: 0;
+        position: relative;
+    }
+
+        .sf-toggle span, .sf-toggle span::before, .sf-toggle span::after {
+            display: block;
+            position: absolute;
+            left: 9px;
+            width: 22px;
+            height: 2px;
+            background: #111;
+            content: "";
+            transition: transform .25s, top .25s, background .25s;
+        }
+
+        .sf-toggle span {
+            top: 19px;
+        }
+
+            .sf-toggle span::before {
+                top: -7px;
+                left: 0;
+            }
+
+            .sf-toggle span::after {
+                top: 7px;
+                left: 0;
+            }
+
+    .sf-header.menu-open .sf-toggle span {
+        background: transparent;
+    }
+
+        .sf-header.menu-open .sf-toggle span::before {
+            top: 0;
+            transform: rotate(45deg);
+        }
+
+        .sf-header.menu-open .sf-toggle span::after {
+            top: 0;
+            transform: rotate(-45deg);
+        }
+
+    @@media (max-width: 991px) {
+        .sf-main {
+            grid-template-columns: auto 1fr auto;
+            gap: 10px;
+            min-height: 64px;
+        }
+
+        .sf-toggle {
+            display: block;
+            order: 3;
+        }
+
+        .sf-actions {
+            order: 2;
+            gap: 6px;
+        }
+
+        .sf-brand {
+            order: 1;
+            font-size: 22px;
+        }
+
+        .sf-hide-sm {
+            display: none !important;
+        }
+
+        .sf-nav {
+            display: none;
+            grid-column: 1 / -1;
+            order: 4;
+            border-top: 1px solid #eee;
+        }
+
+        .sf-header.menu-open .sf-nav {
+            display: block;
+        }
+
+        .sf-menu {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0;
+        }
+
+            .sf-menu > li {
+                padding: 0;
+                border-bottom: 1px solid #f1f1f1;
+            }
+
+                .sf-menu > li > a {
+                    display: block;
+                    padding: 14px 4px;
+                }
+
+                    .sf-menu > li > a::after {
+                        display: none;
+                    }
+
+                .sf-menu > li.active > a {
+                    color: #e53637;
+                }
+
+            .sf-menu .sf-drop {
+                position: static;
+                box-shadow: none;
+                border-top: none;
+                display: none;
+                opacity: 1;
+                visibility: visible;
+                transform: none;
+                padding: 0 0 8px 14px;
+            }
+
+            .sf-menu [data-sf-drop].open > .sf-drop {
+                display: block;
+            }
+
+            .sf-menu [data-sf-drop]:hover > .sf-drop {
+                display: none;
+            }
+
+            .sf-menu [data-sf-drop].open:hover > .sf-drop {
+                display: block;
+            }
+
+        .sf-topbar .sf-right {
+            display: none;
+        }
+
+        .sf-topbar .sf-wrap {
+            justify-content: center;
+        }
+    }
+</style>
+
+<header class="sf-header" id="sfHeader">
+    <div class="sf-topbar">
+        <div class="sf-wrap">
+            <span>Free shipping, 30-day return or refund guarantee.</span>
+            <span class="sf-right">
+                <a asp-controller="Contact" asp-action="Index">Help &amp; Support</a>
+                @if (!isAuth)
+                {
+                    <a asp-controller="Account" asp-action="Login">Sign in</a>
+                }
+            </span>
+        </div>
+    </div>
+
+    <div class="sf-wrap">
+        <div class="sf-main">
+            <a class="sf-brand" asp-controller="Home" asp-action="Index">Male<span>Fashion</span></a>
+
+            <nav class="sf-nav" aria-label="Main navigation">
+                <ul class="sf-menu">
+                    <li class="@Active("Home")"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="@Active("Shop")"><a asp-controller="Shop" asp-action="Index">Shop</a></li>
+                    <li class="@Active("About", "Cart", "Checkout", "Orders")" data-sf-drop>
+                        <a href="#" aria-haspopup="true">Pages<i class="sf-caret"></i></a>
+                        <ul class="sf-drop">
+                            <li><a asp-controller="About" asp-action="Index">About Us</a></li>
+                            <li><a asp-controller="Cart" asp-action="Index">Shopping Cart</a></li>
+                            <li><a asp-controller="Checkout" asp-action="Index">Check Out</a></li>
+                            @if (isAuth)
+                            {
+                                <li><a asp-controller="Orders" asp-action="Index">My Orders</a></li>
+                            }
+                        </ul>
+                    </li>
+                    <li class="@Active("Blog")"><a asp-controller="Blog" asp-action="Index">Blog</a></li>
+                    <li class="@Active("Contact")"><a asp-controller="Contact" asp-action="Index">Contacts</a></li>
+                </ul>
+            </nav>
+
+            <div class="sf-actions">
+                <button type="button" class="sf-icon-btn" id="sfSearchBtn" aria-label="Search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+                </button>
+
+                <a class="sf-icon-btn" asp-controller="Cart" asp-action="Index" aria-label="Cart">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h15l-1.5 9h-12z" /><path d="M6 6L5 3H2" /><circle cx="9" cy="20" r="1.5" /><circle cx="18" cy="20" r="1.5" /></svg>
+                    @await Component.InvokeAsync("CartCount")
+                </a>
+
+                @if (isAuth)
+                {
+                    <div class="sf-user" data-sf-drop>
+                        <button type="button" class="sf-avatar" aria-haspopup="true" aria-label="Account menu">@initial</button>
+                        <ul class="sf-drop">
+                            <li class="sf-hello">Signed in as<strong>@displayName</strong></li>
+                            <li class="sf-sep"></li>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Admin Dashboard</a></li>
+                            }
+                            <li><a asp-controller="Orders" asp-action="Index">My Orders</a></li>
+                            <li><a asp-controller="Account" asp-action="ChangePassword">Change Password</a></li>
+                            <li class="sf-sep"></li>
+                            <li>
+                                <form asp-controller="Account" asp-action="Logout" method="post" style="margin:0;">
+                                    <button type="submit">Logout</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <a class="sf-link sf-hide-sm" asp-controller="Account" asp-action="Login">Login</a>
+                    <a class="sf-cta sf-hide-sm" asp-controller="Account" asp-action="Register">Register</a>
+                }
+            </div>
+
+            <button type="button" class="sf-toggle" id="sfToggle" aria-label="Toggle menu" aria-expanded="false"><span></span></button>
+        </div>
+    </div>
+
+    <div class="sf-search">
+        <div class="sf-wrap">
+            <form asp-controller="Shop" asp-action="Index" method="get">
+                <input type="text" name="search" id="sfSearchInput" placeholder="Search products..." autocomplete="off" />
+                <button type="submit">Search</button>
+            </form>
+        </div>
+    </div>
 </header>
+
+<script>
+    (function () {
+        var header = document.getElementById('sfHeader');
+        if (!header) return;
+
+        function onScroll() { header.classList.toggle('scrolled', window.scrollY > 40); }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+
+        var toggle = document.getElementById('sfToggle');
+        if (toggle) {
+            toggle.addEventListener('click', function () {
+                var open = header.classList.toggle('menu-open');
+                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        }
+
+        var searchBtn = document.getElementById('sfSearchBtn');
+        var searchInput = document.getElementById('sfSearchInput');
+        if (searchBtn) {
+            searchBtn.addEventListener('click', function () {
+                var open = header.classList.toggle('search-open');
+                if (open && searchInput) { setTimeout(function () { searchInput.focus(); }, 250); }
+            });
+        }
+
+        function closeDrops(except) {
+            header.querySelectorAll('[data-sf-drop].open').forEach(function (el) {
+                if (el !== except) el.classList.remove('open');
+            });
+        }
+
+        header.querySelectorAll('[data-sf-drop] > a, [data-sf-drop] > button').forEach(function (trigger) {
+            trigger.addEventListener('click', function (e) {
+                e.preventDefault();
+                var item = trigger.parentElement;
+                var wasOpen = item.classList.contains('open');
+                closeDrops();
+                if (!wasOpen) item.classList.add('open');
+            });
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!header.contains(e.target)) {
+                closeDrops();
+                header.classList.remove('search-open');
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeDrops();
+                header.classList.remove('search-open');
+                header.classList.remove('menu-open');
+            }
+        });
+    })();
+</script>

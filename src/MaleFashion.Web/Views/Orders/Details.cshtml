@@ -1,60 +1,98 @@
-﻿@model MaleFashion.Application.DTOs.OrderDto
-
+﻿@using MaleFashion.Web.Helpers
+@model object
 @{
-    ViewData["Title"] = $"Order {Model.OrderNumber}";
+    var orderNumber = Model.GetText("OrderNumber");
+    ViewData["Title"] = string.IsNullOrEmpty(orderNumber) ? "Order Details" : $"Order {orderNumber}";
+
+    var status = Model.GetText("Status");
+    var paymentStatus = Model.GetText("PaymentStatus");
+    var createdAt = Model.Get("CreatedAt") as DateTime?;
+    var total = Model.GetDecimal("TotalAmount", "Total", "GrandTotal");
+    var subtotal = Model.GetDecimal("SubTotal", "Subtotal");
+
+    var items = Model.GetList("Items", "OrderItems", "Lines").Select(i =>
+    {
+        var qty = i.GetInt(1, "Quantity", "Qty");
+        var unit = i.GetDecimal("UnitPrice", "Price") ?? 0m;
+        return new
+        {
+            Name = i.GetText("ProductName", "Name", "Title"),
+            Qty = qty,
+            Unit = unit,
+            Line = i.GetDecimal("LineTotal", "TotalPrice", "Total") ?? unit * qty
+        };
+    }).ToList();
 }
 
-<h1>Order @Model.OrderNumber</h1>
+<!-- Breadcrumb Section Begin -->
+<section class="breadcrumb-option">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="breadcrumb__text">
+                    <h4>Order Details</h4>
+                    <div class="breadcrumb__links">
+                        <a asp-controller="Home" asp-action="Index">Home</a>
+                        <a asp-controller="Orders" asp-action="Index">My Orders</a>
+                        <span>@orderNumber</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Breadcrumb Section End -->
 
-<dl class="row">
-    <dt class="col-sm-2">Placed On</dt>
-    <dd class="col-sm-10">@Model.CreatedAt.ToString("g")</dd>
+<section class="spad">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-4"><strong>Order #</strong><br />@orderNumber</div>
+            <div class="col-md-4"><strong>Date</strong><br />@(createdAt?.ToString("dd MMM yyyy, HH:mm") ?? "-")</div>
+            <div class="col-md-2"><strong>Status</strong><br />@status</div>
+            <div class="col-md-2"><strong>Payment</strong><br />@paymentStatus</div>
+        </div>
 
-    <dt class="col-sm-2">Status</dt>
-    <dd class="col-sm-10"><span class="badge bg-info">@Model.Status</span></dd>
+        <div class="shopping__cart__table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in items)
+                    {
+                        <tr>
+                            <td><h6>@item.Name</h6></td>
+                            <td>@ModelReader.Money(item.Unit)</td>
+                            <td>@item.Qty</td>
+                            <td class="cart__price">@ModelReader.Money(item.Line)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
 
-    <dt class="col-sm-2">Payment Status</dt>
-    <dd class="col-sm-10"><span class="badge bg-secondary">@Model.PaymentStatus</span></dd>
+        <div class="row mt-4">
+            <div class="col-lg-4 offset-lg-8">
+                <div class="cart__total">
+                    <ul>
+                        @if (subtotal.HasValue)
+                        {
+                            <li>Subtotal <span>@ModelReader.Money(subtotal.Value)</span></li>
+                        }
+                        @if (total.HasValue)
+                        {
+                            <li>Total <span>@ModelReader.Money(total.Value)</span></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-    <dt class="col-sm-2">Shipping Address</dt>
-    <dd class="col-sm-10">
-        @Model.ShippingAddress.FullName<br />
-        @Model.ShippingAddress.Line1
-        @if (!string.IsNullOrEmpty(Model.ShippingAddress.Line2))
-        {
-            <text>, @Model.ShippingAddress.Line2</text>
-        }
-        <br />
-        @Model.ShippingAddress.City, @Model.ShippingAddress.PostalCode<br />
-        @Model.ShippingAddress.Country
-    </dd>
-</dl>
-
-<h3>Items</h3>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Product</th>
-            <th>Quantity</th>
-            <th>Unit Price</th>
-            <th>Line Total</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Items)
-        {
-            <tr>
-                <td>@item.ProductName</td>
-                <td>@item.Quantity</td>
-                <td>@item.UnitPrice.ToString("C")</td>
-                <td>@item.LineTotal.ToString("C")</td>
-            </tr>
-        }
-    </tbody>
-</table>
-
-<div class="text-end">
-    <h4>Total: @Model.TotalAmount.ToString("C")</h4>
-</div>
-
-<a asp-action="Index" class="btn btn-secondary">Back to Orders</a>
+        <p class="mt-4"><a asp-controller="Orders" asp-action="Index">&larr; Back to my orders</a></p>
+    </div>
+</section>

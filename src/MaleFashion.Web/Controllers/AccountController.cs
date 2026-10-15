@@ -263,6 +263,14 @@ public class AccountController : Controller
         return RedirectToAction(nameof(ChangePassword));
     }
 
+    // ---------------- Access denied ----------------
+
+    [HttpGet]
+    public IActionResult AccessDenied(string? returnUrl = null)
+    {
+        return View();
+    }
+
     // ---------------- Logout ----------------
 
     [HttpPost]
