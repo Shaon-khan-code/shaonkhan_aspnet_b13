@@ -3,7 +3,7 @@
 @inject IOptions<RecaptchaOptions> RecaptchaConfig
 @model string
 @{
-    // Model = reCAPTCHA action name, e.g. "login", "register", "contact"
+    
     var siteKey = RecaptchaConfig.Value.SiteKey;
     var action = string.IsNullOrWhiteSpace(Model) ? "submit" : Model;
     var fieldId = "RecaptchaToken_" + action;

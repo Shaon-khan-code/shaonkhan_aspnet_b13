@@ -1,4 +1,4 @@
-﻿@model MaleFashion.Application.DTOs.DashboardSummaryDto
+﻿@* @model MaleFashion.Application.DTOs.DashboardSummaryDto
 
 <h1>Dashboard</h1>
 
@@ -80,4 +80,123 @@
             </tr>
         }
     </tbody>
-</table>
+</table> *@
+
+@using System.Globalization
+@model MaleFashion.Application.DTOs.DashboardSummaryDto
+@{
+    ViewData["Title"] = "Dashboard";
+
+    var us = CultureInfo.GetCultureInfo("en-US");
+    var adminName = User.Identity?.Name ?? "Admin";
+    adminName = adminName.Contains('@') ? adminName.Split('@')[0] : adminName;
+
+    var stats = new[]
+    {
+        (Label: "Total Products",  Value: Model.TotalProducts.ToString("N0", us),  Icon: "bx-package", Color: "primary"),
+        (Label: "Total Customers", Value: Model.TotalCustomers.ToString("N0", us), Icon: "bx-user",    Color: "info"),
+        (Label: "Total Orders",    Value: Model.TotalOrders.ToString("N0", us),    Icon: "bx-cart",    Color: "success"),
+        (Label: "Total Revenue",   Value: Model.TotalRevenue.ToString("C", us),    Icon: "bx-dollar",  Color: "warning"),
+        (Label: "Pending Orders",  Value: Model.PendingOrders.ToString("N0", us),  Icon: "bx-time",    Color: "secondary"),
+        (Label: "Low Stock Products", Value: Model.LowStockProducts.ToString("N0", us), Icon: "bx-error", Color: Model.LowStockProducts > 0 ? "danger" : "success")
+    };
+
+    string StatusColor(string status) => status.ToLowerInvariant() switch
+    {
+        "pending" or "processing" => "warning",
+        "shipped" => "primary",
+        "delivered" or "completed" or "paid" => "success",
+        "cancelled" or "canceled" or "failed" or "refunded" => "danger",
+        _ => "secondary"
+    };
+}
+
+<div class="mb-4">
+    <h4 class="mb-1">Welcome back, @adminName</h4>
+    <p class="text-body-secondary mb-0">Here is what is happening in your store today.</p>
+</div>
+
+@if (Model.LowStockProducts > 0)
+{
+    <div class="alert alert-warning d-flex align-items-center justify-content-between" role="alert">
+        <span>
+            <i class="icon-base bx bx-error me-2"></i>
+            <strong>@Model.LowStockProducts</strong> product(s) are running low on stock.
+        </span>
+        <a asp-area="Admin" asp-controller="Inventory" asp-action="Index" class="btn btn-sm btn-warning">Review inventory</a>
+    </div>
+}
+
+<div class="row g-4 mb-5">
+    @foreach (var stat in stats)
+    {
+        <div class="col-sm-6 col-xl-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="text-body-secondary d-block mb-2">@stat.Label</span>
+                            <h3 class="mb-0">@stat.Value</h3>
+                        </div>
+                        <div class="avatar flex-shrink-0">
+                            <span class="avatar-initial rounded bg-label-@stat.Color">
+                                <i class="icon-base bx @stat.Icon icon-lg"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="mb-0">Recent Orders</h5>
+        <a asp-area="Admin" asp-controller="Orders" asp-action="Index" class="btn btn-sm btn-outline-primary">View all orders</a>
+    </div>
+
+    @if (!Model.RecentOrders.Any())
+    {
+        <div class="card-body text-center text-body-secondary py-5">
+            No orders yet. New orders will appear here as customers check out.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive text-nowrap">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody class="table-border-bottom-0">
+                    @foreach (var order in Model.RecentOrders)
+                    {
+                        var status = Convert.ToString(order.Status) ?? string.Empty;
+                        var payment = Convert.ToString(order.PaymentStatus) ?? string.Empty;
+                        <tr>
+                            <td><strong>@order.OrderNumber</strong></td>
+                            <td>@order.CustomerName</td>
+                            <td>@order.CreatedAt.ToString("dd MMM yyyy, HH:mm", us)</td>
+                            <td>@order.TotalAmount.ToString("C", us)</td>
+                            <td><span class="badge bg-label-@StatusColor(status)">@status</span></td>
+                            <td><span class="badge bg-label-@StatusColor(payment)">@payment</span></td>
+                            <td class="text-end">
+                                <a asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-secondary">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+

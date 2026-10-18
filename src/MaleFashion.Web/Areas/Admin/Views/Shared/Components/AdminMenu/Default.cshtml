@@ -1,0 +1,57 @@
+﻿@model MaleFashion.Web.ViewComponents.AdminMenuViewModel
+
+<ul class="menu-inner py-1">
+    @foreach (var group in Model.Groups)
+    {
+        if (!string.IsNullOrEmpty(group.Header))
+        {
+            <li class="menu-header small text-uppercase"><span class="menu-header-text">@group.Header</span></li>
+        }
+
+        foreach (var entry in group.Entries)
+        {
+            if (entry.Children.Count > 0)
+            {
+                <li class="menu-item @(entry.IsActive ? "active open" : "")">
+                    <a href="javascript:void(0);" class="menu-link menu-toggle">
+                        @if (!string.IsNullOrEmpty(entry.Icon))
+                        {
+                            <i class="menu-icon tf-icons bx @entry.Icon"></i>
+                        }
+                        <div class="text-truncate">@entry.Title</div>
+                    </a>
+                    <ul class="menu-sub">
+                        @foreach (var child in entry.Children)
+                        {
+                            <li class="menu-item @(child.IsActive ? "active" : "")">
+                                <a href="@child.Url" class="menu-link">
+                                    <div class="text-truncate">@child.Title</div>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </li>
+            }
+            else
+            {
+                <li class="menu-item @(entry.IsActive ? "active" : "")">
+                    <a href="@entry.Url" class="menu-link" @(entry.IsExternal ? "target=_blank rel=noopener" : "")>
+                        @if (!string.IsNullOrEmpty(entry.Icon))
+                        {
+                            <i class="menu-icon tf-icons bx @entry.Icon"></i>
+                        }
+                        <div class="text-truncate">@entry.Title</div>
+                    </a>
+                </li>
+            }
+        }
+    }
+
+    <li class="menu-header small text-uppercase"><span class="menu-header-text">Shortcuts</span></li>
+    <li class="menu-item">
+        <a asp-area="" asp-controller="Home" asp-action="Index" target="_blank" class="menu-link">
+            <i class="menu-icon tf-icons bx bx-store"></i>
+            <div class="text-truncate">View store</div>
+        </a>
+    </li>
+</ul>

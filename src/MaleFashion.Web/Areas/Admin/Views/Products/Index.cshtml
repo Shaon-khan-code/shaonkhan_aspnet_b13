@@ -11,7 +11,9 @@
     <div class="alert alert-success">@TempData["Success"]</div>
 }
 
-<a asp-action="Create" class="btn btn-primary mb-3">Add Product</a>
+@* <a asp-action="Create" class="btn btn-primary mb-3">Add Product</a>
+ *@
+<a asp-area="Admin" asp-controller="Products" asp-action="Create" class="btn btn-primary mb-3">Add Product</a>
 
 <form method="get" asp-action="Index" class="row g-2 mb-3">
     <div class="col-auto">
