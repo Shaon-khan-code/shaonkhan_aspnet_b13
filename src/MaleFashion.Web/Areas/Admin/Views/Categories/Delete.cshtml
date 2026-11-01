@@ -1,0 +1,23 @@
+﻿@model MaleFashion.Application.DTOs.CategoryDto
+
+@{
+    ViewData["Title"] = "Delete Category";
+}
+
+<div class="row">
+    <div class="col-xl-6 col-lg-8">
+        <div class="card">
+            <h5 class="card-header text-danger">Delete Category</h5>
+            <div class="card-body">
+                <p>Are you sure you want to delete <strong>@Model.Name</strong>?</p>
+                <p class="text-body-secondary">This action cannot be undone.</p>
+
+                <form asp-action="Delete" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <button type="submit" class="btn btn-danger me-2">Delete</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

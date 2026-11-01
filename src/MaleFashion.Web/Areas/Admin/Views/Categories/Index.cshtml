@@ -1,5 +1,63 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model List<MaleFashion.Application.DTOs.CategoryDto>
+
 @{
+    ViewData["Title"] = "Categories";
 }
+
+@if (TempData["Success"] is string successMessage)
+{
+    <div class="alert alert-success alert-dismissible" role="alert">
+        @successMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["Error"] is string errorMessage)
+{
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="mb-0">All categories <span class="badge bg-label-primary ms-2">@Model.Count</span></h5>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="icon-base bx bx-plus me-1"></i> Add Category
+        </a>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="card-body text-center text-body-secondary py-5">
+            No categories yet. Create the first one to organise your products.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive text-nowrap">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Slug</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="table-border-bottom-0">
+                    @foreach (var category in Model)
+                    {
+                        <tr>
+                            <td><strong>@category.Name</strong></td>
+                            <td><span class="text-body-secondary">@category.Slug</span></td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@category.Id" class="btn btn-sm btn-secondary">Edit</a>
+                                <a asp-action="Delete" asp-route-id="@category.Id" class="btn btn-sm btn-danger">Delete</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

@@ -1,83 +1,159 @@
 ﻿@model MaleFashion.Web.Areas.Admin.ViewModels.Products.ProductFormViewModel
 
-
-
-
 @{
     ViewData["Title"] = "Create Product";
 }
 
-<h1>Create Product</h1>
-
-@if (TempData["Success"] != null)
+@if (TempData["Success"] is string successMessage)
 {
-    <div class="alert alert-success">@TempData["Success"]</div>
+    <div class="alert alert-success alert-dismissible" role="alert">
+        @successMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["Error"] is string errorMessage)
+{
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
 
-<form asp-action="Create" method="post">
-    <div asp-validation-summary="All" class="text-danger"></div>
+<form asp-action="Create" method="post" enctype="multipart/form-data">
 
-    <div class="mb-3">
-        <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <div class="row g-6">
+        <div class="col-xl-8">
+            <div class="card mb-6">
+                <h5 class="card-header">Product information</h5>
+                <div class="card-body">
+                    <div class="row g-6">
+                        <div class="col-12">
+                            <label asp-for="Name" class="form-label"></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Slug" class="form-label"></label>
+                            <input asp-for="Slug" class="form-control" />
+                            <span asp-validation-for="Slug" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Sku" class="form-label"></label>
+                            <input asp-for="Sku" class="form-control" />
+                            <span asp-validation-for="Sku" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-6">
+                <h5 class="card-header">Image</h5>
+                <div class="card-body">
+
+                    <div>
+                        <label asp-for="ImageFile" class="form-label"></label>
+                        <input asp-for="ImageFile" type="file" accept="image/jpeg,image/png,image/webp" class="form-control" />
+                        <span asp-validation-for="ImageFile" class="text-danger"></span>
+
+                    </div>
+                    <img id="imagePreview" class="img-fluid rounded border mt-3 d-none" alt="Selected image preview" style="max-height: 200px;" />
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card mb-6">
+                <h5 class="card-header">Pricing &amp; category</h5>
+                <div class="card-body">
+                    <div class="row g-6">
+                        <div class="col-12">
+                            <label asp-for="Price" class="form-label"></label>
+                            <input asp-for="Price" class="form-control" />
+                            <span asp-validation-for="Price" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="DiscountPrice" class="form-label"></label>
+                            <input asp-for="DiscountPrice" class="form-control" />
+                            <span asp-validation-for="DiscountPrice" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="CategoryId" class="form-label"></label>
+                            <select asp-for="CategoryId" asp-items="Model.CategoryOptions" class="form-select">
+                                <option value="">-- Select Category --</option>
+                            </select>
+                            <span asp-validation-for="CategoryId" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            @{
+                                // প্রথমবার ফর্ম খুললে Active টিক দেওয়া থাকে। ভুলের পর ফর্ম ফিরলে ব্যবহারকারীর বাছাই থাকে।
+                                var activeByDefault = !ViewData.ModelState.Any() || Model.IsActive;
+                            }
+                            <div class="form-check form-switch">
+                                <input type="checkbox" class="form-check-input" id="IsActive" name="IsActive" value="true" @(activeByDefault ? "checked" : "") />
+                                <input type="hidden" name="IsActive" value="false" />
+                                <label class="form-check-label" for="IsActive">Active (visible in the store)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit" class="btn btn-primary me-2">Create</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </div>
     </div>
-
-    <div class="mb-3">
-        <label asp-for="ImageFile" class="form-label"></label>
-        <input asp-for="ImageFile" type="file" accept="image/jpeg,image/png,image/webp" class="form-control" />
-        <span asp-validation-for="ImageFile" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Slug" class="form-label"></label>
-        <input asp-for="Slug" class="form-control" />
-        <span asp-validation-for="Slug" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Sku" class="form-label"></label>
-        <input asp-for="Sku" class="form-control" />
-        <span asp-validation-for="Sku" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Description" class="form-label"></label>
-        <textarea asp-for="Description" class="form-control"></textarea>
-        <span asp-validation-for="Description" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Price" class="form-label"></label>
-        <input asp-for="Price" class="form-control" />
-        <span asp-validation-for="Price" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="DiscountPrice" class="form-label"></label>
-        <input asp-for="DiscountPrice" class="form-control" />
-        <span asp-validation-for="DiscountPrice" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="CategoryId" class="form-label"></label>
-        <select asp-for="CategoryId" asp-items="Model.CategoryOptions" class="form-select">
-            <option value="">-- Select Category --</option>
-        </select>
-        <span asp-validation-for="CategoryId" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3 form-check">
-        <input asp-for="IsActive" class="form-check-input" />
-        <label asp-for="IsActive" class="form-check-label"></label>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Create</button>
 </form>
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-}
+    <script>
+        (function () {
+            var name = document.getElementById('Name');
+            var slug = document.getElementById('Slug');
+            var form = document.querySelector('form[enctype="multipart/form-data"]');
+            var input = document.getElementById('ImageFile');
+            var preview = document.getElementById('imagePreview');
 
+            // Name লিখলে Slug নিজে নিজে ভরে (ব্যবহারকারী নিজে Slug লিখলে আর বদলায় না)
+            if (name && slug) {
+                var typedByUser = slug.value.length > 0;
+                slug.addEventListener('input', function () { typedByUser = true; });
+                name.addEventListener('input', function () {
+                    if (typedByUser && slug.value.length > 0) { return; }
+                    slug.value = name.value.toLowerCase().trim()
+                        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                });
+            }
+
+            // একবার Create চাপলে বোতাম বন্ধ, যাতে ডাবল ক্লিকে একই প্রোডাক্ট দুবার না যায়
+            if (form) {
+                form.addEventListener('submit', function () {
+                    if (window.jQuery && jQuery.fn.valid && !jQuery(form).valid()) { return; }
+                    var btn = form.querySelector('button[type="submit"]');
+                    if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+                });
+            }
+
+            // ছবির প্রিভিউ
+            if (input && preview) {
+                input.addEventListener('change', function () {
+                    var file = input.files && input.files[0];
+                    if (!file) { preview.classList.add('d-none'); return; }
+                    preview.src = URL.createObjectURL(file);
+                    preview.classList.remove('d-none');
+                });
+            }
+        })();
+    </script>
+}

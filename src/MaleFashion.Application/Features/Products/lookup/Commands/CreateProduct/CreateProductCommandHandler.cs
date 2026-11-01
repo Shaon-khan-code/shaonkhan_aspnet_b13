@@ -29,8 +29,15 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
         string? imageKey = null;
         if (request.ImageStream != null)
         {
+            var extension = Path.GetExtension(request.ImageFileName);
+            var uniqueFileName = $"{Guid.NewGuid():N}{extension}";
+
             imageKey = await _fileStorageService.UploadFileAsync(
-                request.ImageStream, request.ImageFileName!, request.ImageContentType!, "products", cancellationToken);
+                request.ImageStream,
+                uniqueFileName,
+                request.ImageContentType!,
+                "products",
+                cancellationToken);
         }
 
         var product = new Product

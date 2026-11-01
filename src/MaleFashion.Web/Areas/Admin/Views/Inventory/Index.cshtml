@@ -1,85 +1,113 @@
-﻿@model MaleFashion.Web.Areas.Admin.ViewModels.Inventory.InventoryListViewModel
+﻿@using System.Globalization
+@model MaleFashion.Web.Areas.Admin.ViewModels.Inventory.InventoryListViewModel
 
 @{
     ViewData["Title"] = "Inventory";
+    var us = CultureInfo.GetCultureInfo("en-US");
 }
 
-<h1>Inventory</h1>
-
-@if (TempData["Success"] != null)
+@if (TempData["Success"] is string successMessage)
 {
-    <div class="alert alert-success">@TempData["Success"]</div>
+    <div class="alert alert-success alert-dismissible" role="alert">
+        @successMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
-
-<form method="get" asp-action="Index" class="row g-2 mb-3">
-    <div class="col-auto">
-        <select name="lowStockOnly" class="form-select">
-            <option value="">-- All Items --</option>
-            <option value="true" selected="@(Model.LowStockOnly == true)">Low Stock Only</option>
-        </select>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-secondary">Filter</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
-    </div>
-</form>
-
-<table class="table">
-    <thead>
-        <tr>
-            <th>Product</th>
-            <th>SKU</th>
-            <th>In Stock</th>
-            <th>Reserved</th>
-            <th>Available</th>
-            <th>Reorder Level</th>
-            <th>Status</th>
-            <th>Last Updated</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Items.Items)
-        {
-            <tr class="@(item.IsLowStock ? "table-warning" : "")">
-                <td>@item.ProductName</td>
-                <td>@item.ProductSku</td>
-                <td>@item.QuantityInStock</td>
-                <td>@item.ReservedQuantity</td>
-                <td>@item.AvailableQuantity</td>
-                <td>@item.ReorderLevel</td>
-                <td>
-                    @if (item.IsLowStock)
-                    {
-                        <span class="badge bg-danger">Low Stock</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-success">OK</span>
-                    }
-                </td>
-                <td>@item.LastUpdatedAt.ToString("g")</td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-secondary">Update Stock</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-
-@if (Model.Items.TotalPages > 1)
+@if (TempData["Error"] is string errorMessage)
 {
-    <nav>
-        <ul class="pagination">
-            @for (var i = 1; i <= Model.Items.TotalPages; i++)
-            {
-                <li class="page-item @(i == Model.Items.PageNumber ? "active" : "")">
-                    <a class="page-link"
-                       asp-action="Index"
-                       asp-route-pageNumber="@i"
-                       asp-route-lowStockOnly="@Model.LowStockOnly">@i</a>
-                </li>
-            }
-        </ul>
-    </nav>
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-3">Inventory</h5>
+        <form method="get" asp-action="Index" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <select name="lowStockOnly" class="form-select">
+                    <option value="">-- All Items --</option>
+                    <option value="true" selected="@(Model.LowStockOnly == true)">Low Stock Only</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-secondary">Filter</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    @if (!Model.Items.Items.Any())
+    {
+        <div class="card-body text-center text-body-secondary py-5 border-top">
+            No inventory items found.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive text-nowrap">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>In Stock</th>
+                        <th>Reserved</th>
+                        <th>Available</th>
+                        <th>Reorder Level</th>
+                        <th>Status</th>
+                        <th>Last Updated</th>
+                        <th class="text-end"></th>
+                    </tr>
+                </thead>
+                <tbody class="table-border-bottom-0">
+                    @foreach (var item in Model.Items.Items)
+                    {
+                        <tr class="@(item.IsLowStock ? "table-warning" : "")">
+                            <td><strong>@item.ProductName</strong></td>
+                            <td>@item.ProductSku</td>
+                            <td>@item.QuantityInStock</td>
+                            <td>@item.ReservedQuantity</td>
+                            <td>@item.AvailableQuantity</td>
+                            <td>@item.ReorderLevel</td>
+                            <td>
+                                @if (item.IsLowStock)
+                                {
+                                    <span class="badge bg-label-danger">Low Stock</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-label-success">OK</span>
+                                }
+                            </td>
+                            <td>@item.LastUpdatedAt.ToString("dd MMM yyyy, HH:mm", us)</td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-secondary">Update Stock</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (Model.Items.TotalPages > 1)
+    {
+        <div class="card-footer">
+            <nav aria-label="Inventory pages">
+                <ul class="pagination justify-content-center mb-0">
+                    @for (var i = 1; i <= Model.Items.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.Items.PageNumber ? "active" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-pageNumber="@i"
+                               asp-route-lowStockOnly="@Model.LowStockOnly">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    }
+</div>

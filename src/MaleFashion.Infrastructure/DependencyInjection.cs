@@ -10,6 +10,7 @@ using MaleFashion.Infrastructure.Services.Email;
 using MaleFashion.Infrastructure.Services.Payment;
 using MaleFashion.Infrastructure.Services.Recaptcha;
 using MaleFashion.Infrastructure.Services.S3;
+using MaleFashion.Infrastructure.Services.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -59,16 +60,38 @@ public static class DependencyInjection
         {
             var awsOptions = configuration.GetSection("Aws").Get<AwsOptions>() ?? new AwsOptions();
 
-            if (string.IsNullOrWhiteSpace(awsOptions.AccessKey) || string.IsNullOrWhiteSpace(awsOptions.Region))
+          
+            var region = string.IsNullOrWhiteSpace(awsOptions.Region)
+                ? RegionEndpoint.USEast1
+                : RegionEndpoint.GetBySystemName(awsOptions.Region);
+
+            if (!string.IsNullOrWhiteSpace(awsOptions.AccessKey) && !string.IsNullOrWhiteSpace(awsOptions.SecretKey))
             {
-                return new AmazonS3Client(RegionEndpoint.USEast1);
+                var credentials = new Amazon.Runtime.BasicAWSCredentials(awsOptions.AccessKey, awsOptions.SecretKey);
+                return new AmazonS3Client(credentials, region);
             }
 
-            var credentials = new Amazon.Runtime.BasicAWSCredentials(awsOptions.AccessKey, awsOptions.SecretKey);
-            return new AmazonS3Client(credentials, RegionEndpoint.GetBySystemName(awsOptions.Region));
+         
+            return new AmazonS3Client(region);
         });
 
-        services.AddScoped<IFileStorageService, S3FileStorageService>();
+      
+        var storageProvider = configuration["Storage:Provider"];
+        var awsSettings = configuration.GetSection("Aws").Get<AwsOptions>() ?? new AwsOptions();
+        var hasAwsKeys = !string.IsNullOrWhiteSpace(awsSettings.AccessKey)
+                         && !string.IsNullOrWhiteSpace(awsSettings.SecretKey);
+
+        var useS3 = string.Equals(storageProvider, "S3", StringComparison.OrdinalIgnoreCase)
+                    || (string.IsNullOrWhiteSpace(storageProvider) && hasAwsKeys);
+
+        if (useS3)
+        {
+            services.AddScoped<IFileStorageService, S3FileStorageService>();
+        }
+        else
+        {
+            services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        }
 
         return services;
     }

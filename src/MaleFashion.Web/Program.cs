@@ -69,6 +69,7 @@ try
     app.UseSerilogRequestLogging();
 
     app.UseHttpsRedirection();
+    app.UseStaticFiles();
     app.UseRouting();
 
     app.UseAuthentication();

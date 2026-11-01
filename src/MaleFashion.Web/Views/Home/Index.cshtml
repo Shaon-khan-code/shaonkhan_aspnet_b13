@@ -3,22 +3,22 @@
 
     var slides = new[]
     {
-        (Image: "hero-1.jpg", Eyebrow: "Summer Collection", Title: "Fall - Winter Collections 2030"),
-        (Image: "hero-2.jpg", Eyebrow: "Summer Collection", Title: "Fall - Winter Collections 2030")
+        (Image: "hero-1.jpg", Eyebrow: "Summer Collection", Title: "Fall - Winter Collections 2026"),
+        (Image: "hero-2.jpg", Eyebrow: "Summer Collection", Title: "Fall - Winter Collections 2026")
     };
 
     var banners = new[]
     {
-        (Column: "col-lg-7 offset-lg-4", Style: "",                    Image: "banner-1.jpg", Title: "Clothing Collections 2030"),
+        (Column: "col-lg-7 offset-lg-4", Style: "",                    Image: "banner-1.jpg", Title: "Clothing Collections 2026"),
         (Column: "col-lg-5",             Style: "banner__item--middle", Image: "banner-2.jpg", Title: "Accessories"),
-        (Column: "col-lg-7",             Style: "banner__item--last",   Image: "banner-3.jpg", Title: "Shoes Spring 2030")
+        (Column: "col-lg-7",             Style: "banner__item--last",   Image: "banner-3.jpg", Title: "Shoes Spring 2026")
     };
 
     var news = new[]
     {
-        (Image: "blog-1.jpg", Date: "16 February 2020", Title: "What Curling Irons Are The Best Ones"),
-        (Image: "blog-2.jpg", Date: "21 February 2020", Title: "Eternity Bands Do Last Forever"),
-        (Image: "blog-3.jpg", Date: "28 February 2020", Title: "The Health Benefits Of Sunglasses")
+        (Image: "blog-1.jpg", Date: "02 November 2026", Title: "What Curling Irons Are The Best Ones"),
+        (Image: "blog-2.jpg", Date: "02 November 2026", Title: "Eternity Bands Do Last Forever"),
+        (Image: "blog-3.jpg", Date: "02 November 2026", Title: "The Health Benefits Of Sunglasses")
     };
 }
 
@@ -53,8 +53,7 @@
         }
     </div>
 </section>
-<!-- Hero Section End -->
-<!-- Banner Section Begin -->
+
 <section class="banner spad">
     <div class="container">
         <div class="row">
@@ -75,11 +74,9 @@
         </div>
     </div>
 </section>
-<!-- Banner Section End -->
-<!-- Product Section: ডেটাবেস থেকে -->
+
 @await Component.InvokeAsync("FeaturedProducts")
 
-<!-- Categories Section Begin -->
 <section class="categories spad">
     <div class="container">
         <div class="row">

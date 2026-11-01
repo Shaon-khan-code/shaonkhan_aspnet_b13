@@ -19,14 +19,26 @@ namespace MaleFashion.Web.Areas.Admin.Controllers;
 [Authorize(Roles = RoleNames.Admin)]
 public class ProductsController : Controller
 {
-    private readonly IMediator _mediator;
+    private const string DuplicateMessage =
+        "A product with the same Slug or SKU already exists. Please use different values.";
 
-    public ProductsController(IMediator mediator)
+    private const string StorageMessage =
+        "The image could not be uploaded to AWS S3. Check the AWS credentials, bucket name and region in the configuration.";
+
+    private readonly IMediator _mediator;
+    private readonly ILogger<ProductsController> _logger;
+
+    public ProductsController(IMediator mediator, ILogger<ProductsController> logger)
     {
         _mediator = mediator;
+        _logger = logger;
     }
 
-    public async Task<IActionResult> Index(string? searchTerm, int? categoryId, bool? isActive, int pageNumber = 1)
+    public async Task<IActionResult> Index(
+        string? searchTerm,
+        int? categoryId,
+        bool? isActive,
+        int pageNumber = 1)
     {
         var result = await _mediator.Send(new GetProductListQuery
         {
@@ -49,12 +61,14 @@ public class ProductsController : Controller
         return View(model);
     }
 
+    [HttpGet]
     public async Task<IActionResult> Create()
     {
         var model = new ProductFormViewModel
         {
             CategoryOptions = await GetCategoryOptionsAsync()
         };
+
         return View(model);
     }
 
@@ -64,9 +78,11 @@ public class ProductsController : Controller
     {
         if (!ModelState.IsValid)
         {
-            model.CategoryOptions = await GetCategoryOptionsAsync();
+            await PopulateAsync(model);
             return View(model);
         }
+
+        var image = ExtractImage(model.ImageFile);
 
         try
         {
@@ -79,31 +95,59 @@ public class ProductsController : Controller
                 Price = model.Price,
                 DiscountPrice = model.DiscountPrice,
                 IsActive = model.IsActive,
-                CategoryId = model.CategoryId
+                CategoryId = model.CategoryId,
+
+                ImageStream = image.Stream,
+                ImageFileName = image.FileName,
+                ImageContentType = image.ContentType
             });
 
             TempData["Success"] = "Product created successfully.";
+
             return RedirectToAction(nameof(Index));
         }
         catch (ValidationException ex)
         {
             AddValidationErrors(ex);
-            model.CategoryOptions = await GetCategoryOptionsAsync();
-            return View(model);
         }
         catch (NotFoundException)
         {
-            ModelState.AddModelError(nameof(model.CategoryId), "The selected category no longer exists.");
-            model.CategoryOptions = await GetCategoryOptionsAsync();
-            return View(model);
+            ModelState.AddModelError(
+                nameof(model.CategoryId),
+                "The selected category no longer exists.");
         }
+        catch (Exception ex) when (IsStorageError(ex))
+        {
+            _logger.LogError(ex, "Product image upload to AWS S3 failed.");
+            ModelState.AddModelError(nameof(model.ImageFile), StorageMessage);
+        }
+        catch (Exception ex) when (IsDuplicateKey(ex))
+        {
+            _logger.LogWarning(ex, "Duplicate product slug or SKU while creating a product.");
+            ModelState.AddModelError(string.Empty, DuplicateMessage);
+        }
+        catch (InvalidOperationException ex)
+        {
+            // ছবি বৈধ নয়, অথবা AWS S3 কনফিগ নেই
+            _logger.LogWarning(ex, "Product image could not be uploaded.");
+            ModelState.AddModelError(nameof(model.ImageFile), ex.Message);
+        }
+        finally
+        {
+            image.Stream?.Dispose();
+        }
+
+        await PopulateAsync(model);
+        return View(model);
     }
 
+    [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
         try
         {
-            var product = await _mediator.Send(new GetProductByIdQuery { Id = id });
+            var product = await _mediator.Send(
+                new GetProductByIdQuery { Id = id });
 
             var model = new ProductFormViewModel
             {
@@ -116,6 +160,7 @@ public class ProductsController : Controller
                 DiscountPrice = product.DiscountPrice,
                 IsActive = product.IsActive,
                 CategoryId = product.CategoryId,
+                CurrentImageUrl = product.ImageUrl,
                 CategoryOptions = await GetCategoryOptionsAsync()
             };
 
@@ -129,7 +174,9 @@ public class ProductsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, ProductFormViewModel model)
+    public async Task<IActionResult> Edit(
+        int id,
+        ProductFormViewModel model)
     {
         if (id != model.Id)
         {
@@ -138,9 +185,11 @@ public class ProductsController : Controller
 
         if (!ModelState.IsValid)
         {
-            model.CategoryOptions = await GetCategoryOptionsAsync();
+            await PopulateAsync(model);
             return View(model);
         }
+
+        var image = ExtractImage(model.ImageFile);
 
         try
         {
@@ -154,29 +203,58 @@ public class ProductsController : Controller
                 Price = model.Price,
                 DiscountPrice = model.DiscountPrice,
                 IsActive = model.IsActive,
-                CategoryId = model.CategoryId
+                CategoryId = model.CategoryId,
+
+                // আগে এখানে ছবি পাঠানো হত না, তাই "Replace Image" কাজ করত না
+                ImageStream = image.Stream,
+                ImageFileName = image.FileName,
+                ImageContentType = image.ContentType
             });
 
             TempData["Success"] = "Product updated successfully.";
+
             return RedirectToAction(nameof(Index));
         }
         catch (ValidationException ex)
         {
             AddValidationErrors(ex);
-            model.CategoryOptions = await GetCategoryOptionsAsync();
-            return View(model);
         }
         catch (NotFoundException)
         {
             return NotFound();
         }
+        catch (Exception ex) when (IsStorageError(ex))
+        {
+            _logger.LogError(ex, "Product image upload to AWS S3 failed.");
+            ModelState.AddModelError(nameof(model.ImageFile), StorageMessage);
+        }
+        catch (Exception ex) when (IsDuplicateKey(ex))
+        {
+            _logger.LogWarning(ex, "Duplicate product slug or SKU while updating product {ProductId}.", model.Id);
+            ModelState.AddModelError(string.Empty, DuplicateMessage);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Product image could not be uploaded for product {ProductId}.", model.Id);
+            ModelState.AddModelError(nameof(model.ImageFile), ex.Message);
+        }
+        finally
+        {
+            image.Stream?.Dispose();
+        }
+
+        await PopulateAsync(model);
+        return View(model);
     }
 
+    [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
         try
         {
-            var product = await _mediator.Send(new GetProductByIdQuery { Id = id });
+            var product = await _mediator.Send(
+                new GetProductByIdQuery { Id = id });
+
             return View(product);
         }
         catch (NotFoundException)
@@ -185,13 +263,15 @@ public class ProductsController : Controller
         }
     }
 
-    [HttpPost, ActionName("Delete")]
+    [HttpPost]
+    [ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         try
         {
             await _mediator.Send(new DeleteProductCommand { Id = id });
+
             TempData["Success"] = "Product deleted successfully.";
         }
         catch (NotFoundException)
@@ -210,27 +290,101 @@ public class ProductsController : Controller
     {
         foreach (var error in ex.Errors)
         {
-            ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            ModelState.AddModelError(
+                error.PropertyName,
+                error.ErrorMessage);
+        }
+    }
+
+    /// <summary>ফর্ম আবার দেখানোর আগে ক্যাটাগরির তালিকা ও (Edit-এ) বর্তমান ছবি ভরে।</summary>
+    private async Task PopulateAsync(ProductFormViewModel model)
+    {
+        model.CategoryOptions = await GetCategoryOptionsAsync();
+
+        if (model.Id > 0 && string.IsNullOrEmpty(model.CurrentImageUrl))
+        {
+            try
+            {
+                var product = await _mediator.Send(
+                    new GetProductByIdQuery { Id = model.Id });
+
+                model.CurrentImageUrl = product.ImageUrl;
+            }
+            catch (NotFoundException)
+            {
+                // প্রোডাক্ট ইতিমধ্যে মুছে গেছে, বর্তমান ছবি দেখানোর দরকার নেই
+            }
         }
     }
 
     private async Task<List<SelectListItem>> GetCategoryOptionsAsync()
     {
-        var categories = await _mediator.Send(new GetCategoryListQuery());
-        return categories
-            .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
-            .ToList();
+        var categories = await _mediator.Send(
+            new GetCategoryListQuery());
 
+        return categories
+            .Select(c => new SelectListItem
+            {
+                Value = c.Id.ToString(),
+                Text = c.Name
+            })
+            .ToList();
     }
-    private static (Stream? Stream, string? FileName, string? ContentType) ExtractImage(IFormFile? file)
+
+    /// <summary>AWS SDK-এর কোনো এরর (যেমন ক্রেডেনশিয়াল নেই, বাকেট ভুল) হলে true।</summary>
+    private static bool IsStorageError(Exception ex)
+    {
+        for (var current = ex; current != null; current = current.InnerException!)
+        {
+            var ns = current.GetType().Namespace;
+            if (ns != null && ns.StartsWith("Amazon", StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            if (current.InnerException == null)
+            {
+                break;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>ডেটাবেসের unique নিয়ম (Slug বা SKU) ভাঙলে true।</summary>
+    private static bool IsDuplicateKey(Exception ex)
+    {
+        for (var current = ex; current != null; current = current.InnerException!)
+        {
+            if (current.Message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (current.InnerException == null)
+            {
+                break;
+            }
+        }
+
+        return false;
+    }
+
+    private static (
+        Stream? Stream,
+        string? FileName,
+        string? ContentType
+    ) ExtractImage(IFormFile? file)
     {
         if (file == null || file.Length == 0)
         {
             return (null, null, null);
         }
 
-        return (file.OpenReadStream(), file.FileName, file.ContentType);
+        return (
+            file.OpenReadStream(),
+            file.FileName,
+            file.ContentType
+        );
     }
-
-
 }

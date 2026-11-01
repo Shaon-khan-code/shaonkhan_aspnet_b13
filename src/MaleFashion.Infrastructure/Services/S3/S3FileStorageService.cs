@@ -48,7 +48,7 @@ public class S3FileStorageService : IFileStorageService
 
         try
         {
-            await _s3Client.PutObjectAsync(request, cancellationToken);
+             await _s3Client.PutObjectAsync(request, cancellationToken);
             return key;
         }
         catch (Exception ex)

@@ -1,72 +1,120 @@
-﻿@model MaleFashion.Web.Areas.Admin.ViewModels.Orders.OrderListViewModel
+﻿@using System.Globalization
 @using MaleFashion.Domain.Enums
+@model MaleFashion.Web.Areas.Admin.ViewModels.Orders.OrderListViewModel
 
-<h1>Orders</h1>
+@{
+    ViewData["Title"] = "Orders";
+    var us = CultureInfo.GetCultureInfo("en-US");
 
-<form method="get" asp-action="Index" class="row g-2 mb-3">
-    <div class="col-auto">
-        <select name="status" class="form-select">
-            <option value="">-- All Statuses --</option>
-            @foreach (var s in Enum.GetValues<OrderStatus>())
-            {
-                <option value="@s" selected="@(Model.Status == s)">@s</option>
-            }
-        </select>
-    </div>
-    <div class="col-auto">
-        <select name="paymentStatus" class="form-select">
-            <option value="">-- All Payment Statuses --</option>
-            @foreach (var p in Enum.GetValues<PaymentStatus>())
-            {
-                <option value="@p" selected="@(Model.PaymentStatus == p)">@p</option>
-            }
-        </select>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-secondary">Filter</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
-    </div>
-</form>
-
-<table class="table">
-    <thead>
-        <tr>
-            <th>Order #</th>
-            <th>Customer</th>
-            <th>Date</th>
-            <th>Total</th>
-            <th>Status</th>
-            <th>Payment</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var order in Model.Orders.Items)
-        {
-            <tr>
-                <td>@order.OrderNumber</td>
-                <td>@order.CustomerName</td>
-                <td>@order.CreatedAt.ToString("g")</td>
-                <td>@order.TotalAmount.ToString("C")</td>
-                <td><span class="badge bg-info">@order.Status</span></td>
-                <td><span class="badge bg-secondary">@order.PaymentStatus</span></td>
-                <td><a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-secondary">View</a></td>
-            </tr>
-        }
-    </tbody>
-</table>
-
-@if (Model.Orders.TotalPages > 1)
-{
-    <nav>
-        <ul class="pagination">
-            @for (var i = 1; i <= Model.Orders.TotalPages; i++)
-            {
-                <li class="page-item @(i == Model.Orders.PageNumber ? "active" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-pageNumber="@i"
-                       asp-route-status="@Model.Status" asp-route-paymentStatus="@Model.PaymentStatus">@i</a>
-                </li>
-            }
-        </ul>
-    </nav>
+    string StatusColor(string value) => value.ToLowerInvariant() switch
+    {
+        "pending" or "processing" => "warning",
+        "shipped" => "primary",
+        "delivered" or "completed" or "paid" => "success",
+        "cancelled" or "canceled" or "failed" or "refunded" => "danger",
+        _ => "secondary"
+    };
 }
+
+@if (TempData["Success"] is string successMessage)
+{
+    <div class="alert alert-success alert-dismissible" role="alert">
+        @successMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["Error"] is string errorMessage)
+{
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-3">Orders</h5>
+        <form method="get" asp-action="Index" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <select name="status" class="form-select">
+                    <option value="">-- All Statuses --</option>
+                    @foreach (var s in Enum.GetValues<OrderStatus>())
+                    {
+                        <option value="@s" selected="@(Model.Status == s)">@s</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select name="paymentStatus" class="form-select">
+                    <option value="">-- All Payment Statuses --</option>
+                    @foreach (var p in Enum.GetValues<PaymentStatus>())
+                    {
+                        <option value="@p" selected="@(Model.PaymentStatus == p)">@p</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-secondary">Filter</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    @if (!Model.Orders.Items.Any())
+    {
+        <div class="card-body text-center text-body-secondary py-5 border-top">
+            No orders found. Orders appear here after customers check out.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive text-nowrap">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th class="text-end"></th>
+                    </tr>
+                </thead>
+                <tbody class="table-border-bottom-0">
+                    @foreach (var order in Model.Orders.Items)
+                    {
+                        var status = Convert.ToString(order.Status) ?? string.Empty;
+                        var payment = Convert.ToString(order.PaymentStatus) ?? string.Empty;
+                        <tr>
+                            <td><strong>@order.OrderNumber</strong></td>
+                            <td>@order.CustomerName</td>
+                            <td>@order.CreatedAt.ToString("dd MMM yyyy, HH:mm", us)</td>
+                            <td>@order.TotalAmount.ToString("C", us)</td>
+                            <td><span class="badge bg-label-@StatusColor(status)">@status</span></td>
+                            <td><span class="badge bg-label-@StatusColor(payment)">@payment</span></td>
+                            <td class="text-end"><a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-secondary">View</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (Model.Orders.TotalPages > 1)
+    {
+        <div class="card-footer">
+            <nav aria-label="Order pages">
+                <ul class="pagination justify-content-center mb-0">
+                    @for (var i = 1; i <= Model.Orders.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.Orders.PageNumber ? "active" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-pageNumber="@i"
+                               asp-route-status="@Model.Status" asp-route-paymentStatus="@Model.PaymentStatus">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    }
+</div>

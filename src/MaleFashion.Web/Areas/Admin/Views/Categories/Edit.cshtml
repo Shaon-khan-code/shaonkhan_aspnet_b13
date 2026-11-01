@@ -1,0 +1,53 @@
+﻿@model MaleFashion.Web.Areas.Admin.ViewModels.Categories.CategoryFormViewModel
+
+@{
+    ViewData["Title"] = "Edit Category";
+}
+
+<div class="row">
+    <div class="col-xl-8 col-lg-10">
+        <div class="card">
+            <h5 class="card-header">Edit Category</h5>
+            <div class="card-body">
+                <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                    <div class="row g-6">
+                        <div class="col-md-6">
+                            <label asp-for="Name" class="form-label"></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Slug" class="form-label"></label>
+                            <input asp-for="Slug" class="form-control" />
+                            <span asp-validation-for="Slug" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="ParentCategoryId" class="form-label"></label>
+                            <select asp-for="ParentCategoryId" asp-items="Model.ParentCategoryOptions" class="form-select">
+                                <option value="">-- None (Top Level) --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <button type="submit" class="btn btn-primary me-2">Save</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

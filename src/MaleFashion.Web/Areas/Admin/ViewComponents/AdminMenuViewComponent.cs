@@ -24,14 +24,44 @@ public class AdminMenuViewComponent : ViewComponent
 
     private sealed record TemplateEntry(string? Header, string Title, string Icon, TemplatePage[] Pages);
 
-    private static readonly (string Title, string Icon, string Controller, string Action)[] StoreDefinitions =
+    private sealed record StoreItem(string Title, string Icon, string Controller);
+
+    private sealed record StoreGroup(string? Header, StoreItem[] Items);
+
+    
+    private static readonly StoreGroup[] StoreGroups =
     {
-        ("Dashboard",  "bx-home-smile", "Dashboard",  "Index"),
-        ("Products",   "bx-package",    "Products",   "Index"),
-        ("Categories", "bx-category",   "Categories", "Index"),
-        ("Inventory",  "bx-box",        "Inventory",  "Index"),
-        ("Orders",     "bx-cart",       "Orders",     "Index"),
-        ("Customers",  "bx-user",       "Customers",  "Index"),
+        new(null, new[]
+        {
+            new StoreItem("Dashboard", "bx-home-smile", "Dashboard"),
+        }),
+        new("Catalog", new[]
+        {
+            new StoreItem("Products", "bx-package", "Products"),
+            new StoreItem("Categories", "bx-category", "Categories"),
+            new StoreItem("Brands", "bx-purchase-tag-alt", "Brands"),
+            new StoreItem("Tags", "bx-purchase-tag", "Tags"),
+            new StoreItem("Inventory", "bx-box", "Inventory"),
+            new StoreItem("Blog Posts", "bx-news", "BlogPosts"),
+        }),
+        new("Variations", new[]
+        {
+            new StoreItem("Sizes", "bx-ruler", "Sizes"),
+            new StoreItem("Colors", "bx-palette", "Colors"),
+            new StoreItem("Units", "bx-cube", "Units"),
+        }),
+        new("Sales", new[]
+        {
+            new StoreItem("Orders", "bx-cart", "Orders"),
+            new StoreItem("Coupons", "bx-gift", "Coupons"),
+            new StoreItem("Delivery Zones", "bx-map", "DeliveryZones"),
+        }),
+        new("People", new[]
+        {
+            new StoreItem("Customers", "bx-user", "Customers"),
+            new StoreItem("Users", "bx-group", "Users"),
+            new StoreItem("Roles", "bx-shield", "Roles"),
+        }),
     };
 
     private static readonly TemplateEntry[] TemplateEntries =
@@ -122,10 +152,7 @@ public class AdminMenuViewComponent : ViewComponent
         var currentId = routeValues["id"]?.ToString();
         var onTemplatePage = inAdminArea && Same(currentController, "Template");
 
-        var groups = new List<AdminMenuGroup>
-        {
-            new("Store management", BuildStoreEntries(inAdminArea, currentController))
-        };
+        var groups = BuildStoreGroups(inAdminArea, currentController);
 
         string? header = null;
         var entries = new List<AdminMenuEntry>();
@@ -177,7 +204,7 @@ public class AdminMenuViewComponent : ViewComponent
         return View(new AdminMenuViewModel(groups));
     }
 
-    private List<AdminMenuEntry> BuildStoreEntries(bool inAdminArea, string? currentController)
+    private List<AdminMenuGroup> BuildStoreGroups(bool inAdminArea, string? currentController)
     {
         var available = _actionProvider.ActionDescriptors.Items
             .OfType<ControllerActionDescriptor>()
@@ -185,21 +212,31 @@ public class AdminMenuViewComponent : ViewComponent
             .Select(a => (Controller: a.ControllerName, Action: a.ActionName))
             .ToList();
 
-        var entries = new List<AdminMenuEntry>();
+        var groups = new List<AdminMenuGroup>();
 
-        foreach (var def in StoreDefinitions)
+        foreach (var group in StoreGroups)
         {
-            if (!available.Any(a => Same(a.Controller, def.Controller) && Same(a.Action, def.Action)))
+            var entries = new List<AdminMenuEntry>();
+
+            foreach (var item in group.Items)
             {
-                continue;
+                if (!available.Any(a => Same(a.Controller, item.Controller) && Same(a.Action, "Index")))
+                {
+                    continue;
+                }
+
+                var url = Url.Action("Index", item.Controller, new { area = "Admin" });
+                entries.Add(new AdminMenuEntry(item.Title, item.Icon, url,
+                    inAdminArea && Same(currentController, item.Controller), false, Array.Empty<AdminMenuEntry>()));
             }
 
-            var url = Url.Action(def.Action, def.Controller, new { area = "Admin" });
-            entries.Add(new AdminMenuEntry(def.Title, def.Icon, url,
-                inAdminArea && Same(currentController, def.Controller), false, Array.Empty<AdminMenuEntry>()));
+            if (entries.Count > 0)
+            {
+                groups.Add(new AdminMenuGroup(group.Header, entries));
+            }
         }
 
-        return entries;
+        return groups;
     }
 
     private static void Flush(List<AdminMenuGroup> groups, string? header, List<AdminMenuEntry> entries)

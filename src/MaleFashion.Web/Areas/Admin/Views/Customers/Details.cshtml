@@ -1,78 +1,114 @@
-﻿@model MaleFashion.Web.Areas.Admin.ViewModels.Customers.CustomerDetailsViewModel
+﻿@using System.Globalization
+@model MaleFashion.Web.Areas.Admin.ViewModels.Customers.CustomerDetailsViewModel
 
-<h1>Customer: @Model.Email</h1>
+@{
+    ViewData["Title"] = "Customer";
+    var us = CultureInfo.GetCultureInfo("en-US");
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">@TempData["Success"]</div>
+    string StatusColor(string value) => value.ToLowerInvariant() switch
+    {
+        "pending" or "processing" => "warning",
+        "shipped" => "primary",
+        "delivered" or "completed" or "paid" => "success",
+        "cancelled" or "canceled" or "failed" or "refunded" => "danger",
+        _ => "secondary"
+    };
 }
 
-<dl class="row">
-    <dt class="col-sm-2">Full Name</dt>
-    <dd class="col-sm-10">@Model.FullName</dd>
-
-    <dt class="col-sm-2">Email</dt>
-    <dd class="col-sm-10">@Model.Email</dd>
-
-    <dt class="col-sm-2">Phone</dt>
-    <dd class="col-sm-10">@Model.PhoneNumber</dd>
-
-    <dt class="col-sm-2">Status</dt>
-    <dd class="col-sm-10">
-        @if (Model.IsLockedOut)
-        {
-            <span class="badge bg-danger">Inactive</span>
-        }
-        else
-        {
-            <span class="badge bg-success">Active</span>
-        }
-    </dd>
-</dl>
-
-<form asp-action="ToggleStatus" asp-route-id="@Model.Id" method="post">
-    @if (Model.IsLockedOut)
-    {
-        <button type="submit" class="btn btn-success">Reactivate Account</button>
-    }
-    else
-    {
-        <button type="submit" class="btn btn-danger">Deactivate Account</button>
-    }
-</form>
-
-<h3 class="mt-4">Order History</h3>
-@if (!Model.Orders.Any())
+@if (TempData["Success"] is string successMessage)
 {
-    <p>This customer has not placed any orders.</p>
+    <div class="alert alert-success alert-dismissible" role="alert">
+        @successMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
-else
+@if (TempData["Error"] is string errorMessage)
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Order #</th>
-                <th>Date</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Payment</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var order in Model.Orders)
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row g-6">
+    <div class="col-xl-4">
+        <div class="card mb-6">
+            <h5 class="card-header">@Model.Email</h5>
+            <div class="card-body">
+                <dl class="mb-4">
+                    <dt>Full Name</dt>
+                    <dd>@Model.FullName</dd>
+                    <dt>Email</dt>
+                    <dd>@Model.Email</dd>
+                    <dt>Phone</dt>
+                    <dd>@Model.PhoneNumber</dd>
+                    <dt>Status</dt>
+                    <dd class="mb-0">
+                        @if (Model.IsLockedOut)
+                        {
+                            <span class="badge bg-label-danger">Inactive</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-label-success">Active</span>
+                        }
+                    </dd>
+                </dl>
+
+                <form asp-action="ToggleStatus" asp-route-id="@Model.Id" method="post">
+                    @if (Model.IsLockedOut)
+                    {
+                        <button type="submit" class="btn btn-success">Reactivate Account</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-danger">Deactivate Account</button>
+                    }
+                </form>
+            </div>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to Customers</a>
+    </div>
+
+    <div class="col-xl-8">
+        <div class="card">
+            <h5 class="card-header">Order History</h5>
+            @if (!Model.Orders.Any())
             {
-                <tr>
-                    <td>@order.OrderNumber</td>
-                    <td>@order.CreatedAt.ToString("g")</td>
-                    <td>@order.ItemCount</td>
-                    <td>@order.TotalAmount.ToString("C")</td>
-                    <td><span class="badge bg-info">@order.Status</span></td>
-                    <td><span class="badge bg-secondary">@order.PaymentStatus</span></td>
-                </tr>
+                <div class="card-body text-body-secondary">This customer has not placed any orders.</div>
             }
-        </tbody>
-    </table>
-}
-
-<a asp-action="Index" class="btn btn-secondary">Back to Customers</a>
+            else
+            {
+                <div class="table-responsive text-nowrap">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Date</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Payment</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-border-bottom-0">
+                            @foreach (var order in Model.Orders)
+                            {
+                                var status = Convert.ToString(order.Status) ?? string.Empty;
+                                var payment = Convert.ToString(order.PaymentStatus) ?? string.Empty;
+                                <tr>
+                                    <td><strong>@order.OrderNumber</strong></td>
+                                    <td>@order.CreatedAt.ToString("dd MMM yyyy", us)</td>
+                                    <td>@order.ItemCount</td>
+                                    <td>@order.TotalAmount.ToString("C", us)</td>
+                                    <td><span class="badge bg-label-@StatusColor(status)">@status</span></td>
+                                    <td><span class="badge bg-label-@StatusColor(payment)">@payment</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

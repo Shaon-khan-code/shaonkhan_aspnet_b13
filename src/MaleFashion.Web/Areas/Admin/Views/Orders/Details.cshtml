@@ -1,80 +1,117 @@
-﻿@model MaleFashion.Application.DTOs.OrderDto
+﻿@using System.Globalization
 @using MaleFashion.Domain.Enums
+@model MaleFashion.Application.DTOs.OrderDto
 
-<h1>Order @Model.OrderNumber</h1>
+@{
+    ViewData["Title"] = "Order " + Model.OrderNumber;
+    var us = CultureInfo.GetCultureInfo("en-US");
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">@TempData["Success"]</div>
+    string StatusColor(string value) => value.ToLowerInvariant() switch
+    {
+        "pending" or "processing" => "warning",
+        "shipped" => "primary",
+        "delivered" or "completed" or "paid" => "success",
+        "cancelled" or "canceled" or "failed" or "refunded" => "danger",
+        _ => "secondary"
+    };
+    var status = Convert.ToString(Model.Status) ?? string.Empty;
+    var payment = Convert.ToString(Model.PaymentStatus) ?? string.Empty;
 }
-@if (TempData["Error"] != null)
+
+@if (TempData["Success"] is string successMessage)
 {
-    <div class="alert alert-danger">@TempData["Error"]</div>
+    <div class="alert alert-success alert-dismissible" role="alert">
+        @successMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["Error"] is string errorMessage)
+{
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
 
-<dl class="row">
-    <dt class="col-sm-2">Placed On</dt>
-    <dd class="col-sm-10">@Model.CreatedAt.ToString("g")</dd>
+<div class="row g-6">
+    <div class="col-xl-8">
+        <div class="card mb-6">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="mb-0">Order @Model.OrderNumber</h5>
+                <span class="badge bg-label-@StatusColor(status)">@status</span>
+            </div>
+            <div class="table-responsive text-nowrap">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th class="text-end">Line Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-border-bottom-0">
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@item.ProductName</td>
+                                <td>@item.Quantity</td>
+                                <td>@item.UnitPrice.ToString("C", us)</td>
+                                <td class="text-end">@item.LineTotal.ToString("C", us)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-body text-end">
+                <h5 class="mb-0">Total: @Model.TotalAmount.ToString("C", us)</h5>
+            </div>
+        </div>
+    </div>
 
-    <dt class="col-sm-2">Payment Status</dt>
-    <dd class="col-sm-10"><span class="badge bg-secondary">@Model.PaymentStatus</span></dd>
+    <div class="col-xl-4">
+        <div class="card mb-6">
+            <h5 class="card-header">Details</h5>
+            <div class="card-body">
+                <dl class="mb-0">
+                    <dt>Placed on</dt>
+                    <dd>@Model.CreatedAt.ToString("dd MMM yyyy, HH:mm", us)</dd>
+                    <dt>Payment status</dt>
+                    <dd><span class="badge bg-label-@StatusColor(payment)">@payment</span></dd>
+                    <dt>Shipping address</dt>
+                    <dd class="mb-0">
+                        @Model.ShippingAddress.FullName<br />
+                        @Model.ShippingAddress.Line1
+                        @if (!string.IsNullOrEmpty(Model.ShippingAddress.Line2))
+                        {
+                            <text>, @Model.ShippingAddress.Line2</text>
+                        }
+                        <br />
+                        @Model.ShippingAddress.City, @Model.ShippingAddress.PostalCode<br />
+                        @Model.ShippingAddress.Country<br />
+                        @Model.ShippingAddress.Phone
+                    </dd>
+                </dl>
+            </div>
+        </div>
 
-    <dt class="col-sm-2">Shipping Address</dt>
-    <dd class="col-sm-10">
-        @Model.ShippingAddress.FullName<br />
-        @Model.ShippingAddress.Line1
-        @if (!string.IsNullOrEmpty(Model.ShippingAddress.Line2))
-        {
-            <text>, @Model.ShippingAddress.Line2</text>
-        }
-        <br />
-        @Model.ShippingAddress.City, @Model.ShippingAddress.PostalCode<br />
-        @Model.ShippingAddress.Country<br />
-        @Model.ShippingAddress.Phone
-    </dd>
-</dl>
+        <div class="card mb-6">
+            <h5 class="card-header">Update status</h5>
+            <div class="card-body">
+                <form asp-action="UpdateStatus" method="post">
+                    <input type="hidden" name="OrderId" value="@Model.Id" />
+                    <label class="form-label">Order Status</label>
+                    <select name="Status" class="form-select mb-4">
+                        @foreach (var s in Enum.GetValues<OrderStatus>())
+                        {
+                            <option value="@s" selected="@(Model.Status == s)">@s</option>
+                        }
+                    </select>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </form>
+            </div>
+        </div>
 
-<h3>Items</h3>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Product</th>
-            <th>Quantity</th>
-            <th>Unit Price</th>
-            <th>Line Total</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Items)
-        {
-            <tr>
-                <td>@item.ProductName</td>
-                <td>@item.Quantity</td>
-                <td>@item.UnitPrice.ToString("C")</td>
-                <td>@item.LineTotal.ToString("C")</td>
-            </tr>
-        }
-    </tbody>
-</table>
-
-<div class="text-end mb-3">
-    <h4>Total: @Model.TotalAmount.ToString("C")</h4>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to Orders</a>
+    </div>
 </div>
-
-<form asp-action="UpdateStatus" method="post" class="row g-2 align-items-end">
-    <input type="hidden" name="OrderId" value="@Model.Id" />
-    <div class="col-auto">
-        <label class="form-label">Order Status</label>
-        <select name="Status" class="form-select">
-            @foreach (var s in Enum.GetValues<OrderStatus>())
-            {
-                <option value="@s" selected="@(Model.Status == s)">@s</option>
-            }
-        </select>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-primary">Update Status</button>
-    </div>
-</form>
-
-<a asp-action="Index" class="btn btn-secondary mt-3">Back to Orders</a>
