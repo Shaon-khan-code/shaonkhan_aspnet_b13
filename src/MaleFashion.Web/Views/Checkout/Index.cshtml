@@ -1,4 +1,7 @@
-﻿@using MaleFashion.Web.Helpers
+﻿
+ @using MaleFashion.Web.Helpers
+@using MaleFashion.Web.ViewModels.Checkout
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @model MaleFashion.Web.ViewModels.Checkout.CheckoutViewModel
 @{
     ViewData["Title"] = "Check Out";
@@ -6,6 +9,10 @@
     var lines = Model.Cart.ToCartLines();
     var (subtotal, total) = Model.Cart.GetCartTotals(lines);
     var modelErrors = ViewData.ModelState[string.Empty]?.Errors;
+
+    var bkashNumber = Configuration["Payment:Bkash:MerchantNumber"] ?? "(merchant number not set)";
+    var nagadNumber = Configuration["Payment:Nagad:MerchantNumber"] ?? "(merchant number not set)";
+    var cardYears = Enumerable.Range(DateTime.UtcNow.Year, 11).Select(y => y.ToString()).ToList();
 }
 
 <!-- Breadcrumb Section Begin -->
@@ -26,6 +33,28 @@
     </div>
 </section>
 <!-- Breadcrumb Section End -->
+
+<style>
+    .pay-box { margin: 18px 0 20px; }
+    .pay-box h6 { font-weight: 700; margin-bottom: 12px; }
+    .pay-opt { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border: 1px solid #e5e5e5; border-radius: 6px;
+               padding: 10px 12px; margin-bottom: 8px; cursor: pointer; }
+    .pay-opt input { margin: 0; }
+    .pay-opt small { color: #888; width: 100%; padding-left: 26px; margin-top: -4px; }
+    .pay-opt:has(input:checked) { border-color: #111; background: #fafafa; }
+    .pay-name { font-weight: 700; padding: 2px 10px; border-radius: 12px; color: #fff; font-size: 13px; }
+    .pay-name.cod { background: #2e7d32; } .pay-name.bk { background: #e2136e; } .pay-name.ng { background: #f6921e; }
+    .pay-wallet { border: 1px dashed #ccc; border-radius: 6px; padding: 14px; margin-bottom: 12px; background: #fffdf8; }
+    .pay-wallet p { font-size: 13px; line-height: 1.7; color: #555; margin-bottom: 10px; }
+    .pay-wallet input[type=text] { width: 100%; height: 42px; border: 1px solid #e1e1e1; padding: 0 12px; margin-bottom: 4px; }
+    .pay-card { border: 1px dashed #ccc; border-radius: 6px; padding: 14px; margin-bottom: 12px; background: #f8fbff; }
+    .pay-card input[type=text], .pay-card input[type=password], .pay-card select { width: 100%; height: 42px; border: 1px solid #e1e1e1; padding: 0 12px; margin-bottom: 4px; background: #fff; }
+    .pay-card .row-2 { display: flex; gap: 10px; }
+    .pay-card .row-2 > div { flex: 1; }
+    .pay-card .hint { font-size: 12px; color: #888; margin: 8px 0 0; }
+    .pay-name.cd { background: #1a73e8; }
+</style>
+
 <!-- Checkout Section Begin -->
 <section class="checkout spad">
     <div class="container">
@@ -131,6 +160,81 @@
                                 <li>Subtotal <span>@ModelReader.Money(subtotal)</span></li>
                                 <li>Total <span>@ModelReader.Money(total)</span></li>
                             </ul>
+                            <div class="pay-box">
+                                <h6>Payment method</h6>
+
+                                <label class="pay-opt">
+                                    <input type="radio" asp-for="PaymentMethod" value="Card" />
+                                    <span class="pay-name cd">Card</span>
+                                    <small>Pay now with a debit or credit card (test mode).</small>
+                                </label>
+
+                                <label class="pay-opt">
+                                    <input type="radio" asp-for="PaymentMethod" value="CashOnDelivery" />
+                                    <span class="pay-name cod">Cash on Delivery</span>
+                                    <small>Pay in cash when your order arrives.</small>
+                                </label>
+                                <label class="pay-opt">
+                                    <input type="radio" asp-for="PaymentMethod" value="Bkash" />
+                                    <span class="pay-name bk">bKash</span>
+                                    <small>Send money from your bKash account.</small>
+                                </label>
+                                <label class="pay-opt">
+                                    <input type="radio" asp-for="PaymentMethod" value="Nagad" />
+                                    <span class="pay-name ng">Nagad</span>
+                                    <small>Send money from your Nagad account.</small>
+                                </label>
+
+                                <div class="pay-wallet" id="walletPanel" style="display:none;"
+                                     data-bkash="@bkashNumber" data-nagad="@nagadNumber">
+                                    <p>
+                                        1. Open your <b id="walletName">bKash</b> app and choose <b>Send Money</b>.<br />
+                                        2. Send <b>@ModelReader.Money(total)</b> to <b id="merchantNumber">@bkashNumber</b>.<br />
+                                        3. Enter your wallet number and the Transaction ID (TrxID) from the confirmation message.
+                                    </p>
+                                    <input asp-for="WalletNumber" type="text" placeholder="Your wallet number (01XXXXXXXXX)" autocomplete="tel" />
+                                    <span asp-validation-for="WalletNumber" class="text-danger small d-block mb-2"></span>
+                                    <input asp-for="TransactionId" type="text" placeholder="Transaction ID (TrxID)" autocomplete="off" />
+                                    <span asp-validation-for="TransactionId" class="text-danger small d-block mb-1"></span>
+                                </div>
+
+                                <div class="pay-card" id="cardPanel" style="display:none;">
+                                    <input asp-for="CardholderName" type="text" placeholder="Name on card" autocomplete="cc-name" />
+                                    <span asp-validation-for="CardholderName" class="text-danger small d-block mb-2"></span>
+
+                                    <input asp-for="CardNumber" type="text" inputmode="numeric" placeholder="Card number" autocomplete="cc-number" maxlength="23" />
+                                    <span asp-validation-for="CardNumber" class="text-danger small d-block mb-2"></span>
+
+                                    <div class="row-2">
+                                        <div>
+                                            <select asp-for="ExpiryMonth">
+                                                <option value="">MM</option>
+                                                @for (var month = 1; month <= 12; month++)
+                                                {
+                                                    <option value="@month.ToString("00")">@month.ToString("00")</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <select asp-for="ExpiryYear">
+                                                <option value="">YYYY</option>
+                                                @foreach (var year in cardYears)
+                                                {
+                                                    <option value="@year">@year</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <input asp-for="Cvv" type="password" inputmode="numeric" placeholder="CVV" autocomplete="cc-csc" maxlength="4" />
+                                        </div>
+                                    </div>
+                                    <span asp-validation-for="ExpiryMonth" class="text-danger small d-block"></span>
+                                    <span asp-validation-for="Cvv" class="text-danger small d-block"></span>
+
+                                    <p class="hint">Test mode: use 4242 4242 4242 4242 with any future expiry and any CVV. Card numbers ending in 0000 are declined. No real payment is taken.</p>
+                                </div>
+                            </div>
+
                             <button type="submit" class="site-btn">PLACE ORDER</button>
                             <p class="mt-3 mb-0"><a asp-controller="Cart" asp-action="Index">&larr; Back to cart</a></p>
                         </div>
@@ -141,3 +245,30 @@
     </div>
 </section>
 <!-- Checkout Section End -->
+
+@section Scripts {
+    <script>
+        (function () {
+            var walletPanel = document.getElementById('walletPanel');
+            var cardPanel = document.getElementById('cardPanel');
+            var radios = document.querySelectorAll('input[name="PaymentMethod"]');
+
+            function update() {
+                var selected = document.querySelector('input[name="PaymentMethod"]:checked');
+                var method = selected ? selected.value : 'CashOnDelivery';
+                var wallet = method === 'Bkash' || method === 'Nagad';
+
+                walletPanel.style.display = wallet ? 'block' : 'none';
+                cardPanel.style.display = method === 'Card' ? 'block' : 'none';
+
+                if (wallet) {
+                    document.getElementById('walletName').textContent = method === 'Bkash' ? 'bKash' : 'Nagad';
+                    document.getElementById('merchantNumber').textContent = method === 'Bkash' ? walletPanel.dataset.bkash : walletPanel.dataset.nagad;
+                }
+            }
+
+            radios.forEach(function (r) { r.addEventListener('change', update); });
+            update();
+        })();
+    </script>
+}

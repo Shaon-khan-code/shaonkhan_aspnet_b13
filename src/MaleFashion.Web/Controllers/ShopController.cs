@@ -1,4 +1,6 @@
-﻿using MaleFashion.Application.Features.Categories.Queries.GetCategoryList;
+﻿using MaleFashion.Application.Common.Exceptions;
+using MaleFashion.Application.Features.Categories.Queries.GetCategoryList;
+using MaleFashion.Application.Features.Products.Queries.GetProductById;
 using MaleFashion.Application.Features.Products.Queries.GetProductList;
 using MaleFashion.Web.ViewModels.Shop;
 using MediatR;
@@ -52,5 +54,27 @@ public class ShopController : Controller
         };
 
         return View(model);
+    }
+
+    
+    [HttpGet]
+    public async Task<IActionResult> Details(int id)
+    {
+        try
+        {
+            var product = await _mediator.Send(new GetProductByIdQuery { Id = id });
+
+           
+            if (!product.IsActive)
+            {
+                return NotFound();
+            }
+
+            return View(product);
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
     }
 }

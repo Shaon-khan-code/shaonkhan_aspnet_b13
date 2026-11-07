@@ -72,10 +72,19 @@ public class ProductRepository : Repository<Product>, IProductRepository
         return await DbSet.Include(p => p.Category).FirstOrDefaultAsync(p => p.Id == id);
     }
 
+    // নতুন: Add to Cart এর জন্য, স্টকসহ প্রোডাক্ট আনে
+    public async Task<Product?> GetByIdWithInventoryAsync(int id)
+    {
+        return await DbSet
+            .Include(p => p.Inventory)
+            .FirstOrDefaultAsync(p => p.Id == id);
+    }
+
     public async Task<bool> HasOrderItemsAsync(int productId)
     {
         return await Context.Set<OrderItem>().AnyAsync(oi => oi.ProductId == productId);
     }
+
     public async Task<Product?> GetDetailsAsync(int id)
     {
         return await DbSet

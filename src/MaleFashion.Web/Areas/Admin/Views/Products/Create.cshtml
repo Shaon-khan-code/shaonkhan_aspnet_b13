@@ -1,4 +1,5 @@
-﻿@model MaleFashion.Web.Areas.Admin.ViewModels.Products.ProductFormViewModel
+﻿
+@model MaleFashion.Web.Areas.Admin.ViewModels.Products.ProductFormViewModel
 
 @{
     ViewData["Title"] = "Create Product";
@@ -105,6 +106,25 @@
                 </div>
             </div>
 
+            <div class="card mb-6">
+                <h5 class="card-header">Inventory</h5>
+                <div class="card-body">
+                    <div class="row g-6">
+                        <div class="col-12">
+                            <label asp-for="InitialStock" class="form-label"></label>
+                            <input asp-for="InitialStock" class="form-control" min="0" />
+                            <span asp-validation-for="InitialStock" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="ReorderLevel" class="form-label"></label>
+                            <input asp-for="ReorderLevel" class="form-control" min="0" />
+                            <span asp-validation-for="ReorderLevel" class="text-danger"></span>
+                            <div class="form-text">The product shows as "Low stock" when available stock falls to this number.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div>
                 <button type="submit" class="btn btn-primary me-2">Create</button>
                 <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
@@ -125,7 +145,6 @@
             var input = document.getElementById('ImageFile');
             var preview = document.getElementById('imagePreview');
 
-            // Name লিখলে Slug নিজে নিজে ভরে (ব্যবহারকারী নিজে Slug লিখলে আর বদলায় না)
             if (name && slug) {
                 var typedByUser = slug.value.length > 0;
                 slug.addEventListener('input', function () { typedByUser = true; });
@@ -136,7 +155,7 @@
                 });
             }
 
-            // একবার Create চাপলে বোতাম বন্ধ, যাতে ডাবল ক্লিকে একই প্রোডাক্ট দুবার না যায়
+            
             if (form) {
                 form.addEventListener('submit', function () {
                     if (window.jQuery && jQuery.fn.valid && !jQuery(form).valid()) { return; }
@@ -145,7 +164,7 @@
                 });
             }
 
-            // ছবির প্রিভিউ
+            
             if (input && preview) {
                 input.addEventListener('change', function () {
                     var file = input.files && input.files[0];

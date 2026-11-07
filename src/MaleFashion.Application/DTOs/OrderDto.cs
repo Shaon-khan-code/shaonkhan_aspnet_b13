@@ -8,6 +8,9 @@ public class OrderDto
     public string OrderNumber { get; set; } = string.Empty;
     public OrderStatus Status { get; set; }
     public PaymentStatus PaymentStatus { get; set; }
+    public PaymentMethod PaymentMethod { get; set; }
+    public string? PaymentReference { get; set; }
+    public string? PaymentAccount { get; set; }
     public decimal TotalAmount { get; set; }
     public DateTime CreatedAt { get; set; }
 

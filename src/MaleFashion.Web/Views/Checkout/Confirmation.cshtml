@@ -1,0 +1,106 @@
+﻿@using System.Globalization
+@model MaleFashion.Application.DTOs.OrderDto
+@{
+    ViewData["Title"] = "Order placed";
+
+    var us = CultureInfo.GetCultureInfo("en-US");
+    var paymentLabel = ViewData["PaymentLabel"] as string;
+    var payment = Convert.ToString(Model.PaymentStatus) ?? string.Empty;
+    var paymentBadge = payment.Equals("Paid", StringComparison.OrdinalIgnoreCase) ? "#2e7d32" : "#f57c00";
+}
+
+<style>
+    .oc-card { background: #fff; border-radius: 8px; box-shadow: 0 2px 14px rgba(0,0,0,.08); padding: 36px 30px; margin-bottom: 24px; }
+    .oc-check { width: 70px; height: 70px; line-height: 70px; border-radius: 50%; background: #e8f5e9; color: #2e7d32;
+                font-size: 36px; font-weight: 700; margin: 0 auto 16px; text-align: center; }
+    .oc-card h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .oc-meta { color: #666; }
+    .oc-badge { display: inline-block; padding: 3px 12px; border-radius: 12px; color: #fff; font-size: 12px; font-weight: 700; }
+    .oc-table { width: 100%; }
+    .oc-table th { font-size: 13px; text-transform: uppercase; color: #888; padding: 8px 0; border-bottom: 1px solid #eee; }
+    .oc-table td { padding: 10px 0; border-bottom: 1px solid #f3f3f3; }
+    .oc-total { text-align: right; font-size: 20px; font-weight: 800; padding-top: 14px; }
+    .oc-actions a { margin: 4px; }
+</style>
+
+<section class="breadcrumb-option">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="breadcrumb__text">
+                    <h4>Order placed</h4>
+                    <div class="breadcrumb__links">
+                        <a asp-controller="Home" asp-action="Index">Home</a>
+                        <span>Order confirmation</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="spad">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="oc-card text-center">
+                    <div class="oc-check">&#10003;</div>
+                    <h2>Thank you! Your order is placed.</h2>
+                    <p class="oc-meta">
+                        Order number <strong>@Model.OrderNumber</strong><br />
+                        Placed on @Model.CreatedAt.ToString("dd MMM yyyy, HH:mm", us)
+                    </p>
+                    <p>
+                        <span class="oc-badge" style="background:@paymentBadge;">Payment: @payment</span>
+                        @if (!string.IsNullOrWhiteSpace(paymentLabel))
+                        {
+                            <span class="oc-meta"> &nbsp;via @paymentLabel</span>
+                        }
+                    </p>
+                </div>
+
+                <div class="oc-card">
+                    <h5 class="mb-3">Items</h5>
+                    <table class="oc-table">
+                        <thead>
+                            <tr><th>Product</th><th>Qty</th><th>Price</th><th class="text-right">Total</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td>@item.ProductName</td>
+                                    <td>@item.Quantity</td>
+                                    <td>@item.UnitPrice.ToString("C", us)</td>
+                                    <td class="text-right">@item.LineTotal.ToString("C", us)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <div class="oc-total">Total: @Model.TotalAmount.ToString("C", us)</div>
+                </div>
+
+                <div class="oc-card">
+                    <h5 class="mb-3">Shipping to</h5>
+                    <p class="mb-0">
+                        @Model.ShippingAddress.FullName<br />
+                        @Model.ShippingAddress.Line1
+                        @if (!string.IsNullOrEmpty(Model.ShippingAddress.Line2))
+                        {
+                            <text>, @Model.ShippingAddress.Line2</text>
+                        }
+                        <br />
+                        @Model.ShippingAddress.City, @Model.ShippingAddress.PostalCode<br />
+                        @Model.ShippingAddress.Country<br />
+                        @Model.ShippingAddress.Phone
+                    </p>
+                </div>
+
+                <div class="text-center oc-actions">
+                    <a asp-controller="Shop" asp-action="Index" class="primary-btn">Continue shopping</a>
+                    <a asp-controller="Orders" asp-action="Index" class="site-btn">View my orders</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

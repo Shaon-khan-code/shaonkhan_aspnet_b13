@@ -16,7 +16,8 @@ public class AddToCartCommandHandler : IRequestHandler<AddToCartCommand, Unit>
 
     public async Task<Unit> Handle(AddToCartCommand request, CancellationToken cancellationToken)
     {
-        var product = await _unitOfWork.Products.GetByIdAsync(request.ProductId)
+    
+        var product = await _unitOfWork.Products.GetByIdWithInventoryAsync(request.ProductId)
             ?? throw new NotFoundException(nameof(Domain.Entities.Product), request.ProductId);
 
         if (!product.IsActive)

@@ -9,12 +9,5 @@ namespace MaleFashion.Web.Areas.Admin.Controllers
     {
         public IActionResult Index() => RedirectToAction("Index", "Dashboard");
     }
-    //[Area("Admin")]
-    //public class HomeController : Controller
-    //{
-    //    public IActionResult Index()
-    //    {
-    //        return View();
-    //    }
-    //}
+    
 }

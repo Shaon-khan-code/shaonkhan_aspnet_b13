@@ -14,6 +14,8 @@ public class CreateProductCommand : IRequest<ProductDto>, IProductCommand
     public decimal? DiscountPrice { get; set; }
     public bool IsActive { get; set; } = true;
     public int CategoryId { get; set; }
+    public int InitialStock { get; set; }
+    public int ReorderLevel { get; set; }
 
     public Stream? ImageStream { get; set; }
     public string? ImageFileName { get; set; }

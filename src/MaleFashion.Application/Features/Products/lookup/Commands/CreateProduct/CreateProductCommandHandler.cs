@@ -56,6 +56,17 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
         };
 
         await _unitOfWork.Products.AddAsync(product);
+
+        var inventory = new MaleFashion.Domain.Entities.Inventory
+        {
+            Product = product,
+            QuantityInStock = request.InitialStock,
+            ReservedQuantity = 0,
+            ReorderLevel = request.ReorderLevel,
+            LastUpdatedAt = DateTime.UtcNow
+        };
+        await _unitOfWork.Inventory.AddAsync(inventory);
+
         await _unitOfWork.SaveChangesAsync();
 
         var dto = _mapper.Map<ProductDto>(product);

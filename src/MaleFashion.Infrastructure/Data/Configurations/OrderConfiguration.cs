@@ -20,8 +20,14 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.TotalAmount)
             .HasPrecision(18, 2);
 
-        // Restrict: an address used on a past order must not be deletable
-        // out from under order history.
+        builder.Property(o => o.PaymentReference)
+            .HasMaxLength(100);
+
+        builder.Property(o => o.PaymentAccount)
+            .HasMaxLength(30);
+
+        
+       
         builder.HasOne(o => o.ShippingAddress)
             .WithMany(a => a.Orders)
             .HasForeignKey(o => o.ShippingAddressId)

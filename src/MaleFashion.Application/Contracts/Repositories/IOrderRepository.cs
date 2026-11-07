@@ -18,4 +18,5 @@ public interface IOrderRepository : IRepository<Order>
     Task<decimal> GetTotalRevenueAsync(PaymentStatus paymentStatus);
 
     Task<List<Order>> GetRecentOrdersAsync(int count);
+    Task<bool> PaymentReferenceExistsAsync(string paymentReference);
 }

@@ -42,4 +42,13 @@ public class ProductFormViewModel
     public IFormFile? ImageFile { get; set; }
 
     public string? CurrentImageUrl { get; set; }
+
+  
+    [Display(Name = "Initial stock")]
+    [Range(0, 1000000, ErrorMessage = "Initial stock must be zero or more.")]
+    public int InitialStock { get; set; } = 10;
+
+    [Display(Name = "Reorder level")]
+    [Range(0, 1000000, ErrorMessage = "Reorder level must be zero or more.")]
+    public int ReorderLevel { get; set; } = 5;
 }

@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using MaleFashion.Application.Common.Exceptions;
+using MaleFashion.Application.DTOs;
 using MaleFashion.Application.Features.Inventory.Commands.UpdateInventory;
-using MaleFashion.Application.Features.Inventory.Queries.GetInventoryByProductId;
 using MaleFashion.Application.Features.Inventory.Queries.GetInventoryList;
 using MaleFashion.Domain.Constants;
 using MaleFashion.Web.Areas.Admin.ViewModels.Inventory;
@@ -40,36 +40,38 @@ public class InventoryController : Controller
         return View(model);
     }
 
-    public async Task<IActionResult> UpdateStock(int id)
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
     {
-        // GetInventoryByProductIdQuery is keyed by ProductId, not Inventory.Id —
-        // reusing IInventoryRepository.GetByIdAsync via a direct fetch here would
-        // duplicate logic, so instead this action expects the Inventory Id and
-        // looks it up the same way the list already has it (via the DTO's Id).
-        var inventory = await GetInventoryByIdOrNotFoundAsync(id);
+        var inventory = await FindInventoryAsync(id);
         if (inventory == null)
         {
             return NotFound();
         }
 
-        var model = new UpdateStockViewModel
+        return View(new UpdateStockViewModel
         {
             Id = inventory.Id,
             ProductName = inventory.ProductName,
             ProductSku = inventory.ProductSku,
             QuantityInStock = inventory.QuantityInStock,
+            ReservedQuantity = inventory.ReservedQuantity,
             ReorderLevel = inventory.ReorderLevel
-        };
-
-        return View(model);
+        });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateStock(UpdateStockViewModel model)
+    public async Task<IActionResult> Edit(int id, UpdateStockViewModel model)
     {
+        if (id != model.Id)
+        {
+            return BadRequest();
+        }
+
         if (!ModelState.IsValid)
         {
+            await FillDisplayFieldsAsync(model);
             return View(model);
         }
 
@@ -91,6 +93,8 @@ public class InventoryController : Controller
             {
                 ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
             }
+
+            await FillDisplayFieldsAsync(model);
             return View(model);
         }
         catch (NotFoundException)
@@ -99,14 +103,41 @@ public class InventoryController : Controller
         }
     }
 
-    private async Task<Application.DTOs.InventoryDto?> GetInventoryByIdOrNotFoundAsync(int inventoryId)
+  
+    private async Task<InventoryDto?> FindInventoryAsync(int inventoryId)
     {
-        // No GetInventoryById(int id) query exists yet — only GetByProductId.
-        // Rather than invent a redundant query solely for this lookup, the
-        // list is paged through here using a large page size as a pragmatic
-        // stand-in. Flagged below as worth a dedicated query if this becomes
-        // a bottleneck.
-        var page = await _mediator.Send(new GetInventoryListQuery { PageNumber = 1, PageSize = int.MaxValue });
-        return page.Items.FirstOrDefault(i => i.Id == inventoryId);
+        for (var page = 1; ; page++)
+        {
+            var result = await _mediator.Send(new GetInventoryListQuery
+            {
+                PageNumber = page,
+                PageSize = 50
+            });
+
+            var match = result.Items.FirstOrDefault(i => i.Id == inventoryId);
+            if (match != null)
+            {
+                return match;
+            }
+
+            if (page >= result.TotalPages)
+            {
+                return null;
+            }
+        }
+    }
+
+    
+    private async Task FillDisplayFieldsAsync(UpdateStockViewModel model)
+    {
+        var inventory = await FindInventoryAsync(model.Id);
+        if (inventory == null)
+        {
+            return;
+        }
+
+        model.ProductName = inventory.ProductName;
+        model.ProductSku = inventory.ProductSku;
+        model.ReservedQuantity = inventory.ReservedQuantity;
     }
 }

@@ -1,9 +1,9 @@
-﻿using MaleFashion.Application.Common.Exceptions;
+﻿using FluentValidation;
+using MaleFashion.Application.Common.Exceptions;
 using MaleFashion.Application.Features.Cart.Commands.AddToCart;
 using MaleFashion.Application.Features.Cart.Commands.RemoveCartItem;
 using MaleFashion.Application.Features.Cart.Commands.UpdateCartItemQuantity;
 using MaleFashion.Application.Features.Cart.Queries.GetCart;
-using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,7 +30,10 @@ public class CartController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Add(int productId, int quantity = 1)
     {
+        // Buy Now স্ক্রিপ্ট (fetch) এই header পাঠায়, তখন JSON ফেরত দেওয়া হয়
+        var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
         var (userId, guestId) = GetOrCreateOwnerIdentity();
+        string? error = null;
 
         try
         {
@@ -41,20 +44,34 @@ public class CartController : Controller
                 ProductId = productId,
                 Quantity = quantity
             });
-
-            TempData["CartSuccess"] = "Item added to cart.";
         }
         catch (ValidationException ex)
         {
-            TempData["CartError"] = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
+            error = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
         }
         catch (ConflictException ex)
         {
-            TempData["CartError"] = ex.Message;
+            error = ex.Message;
         }
         catch (NotFoundException)
         {
-            TempData["CartError"] = "Product not found.";
+            error = "Product not found.";
+        }
+
+        if (isAjax)
+        {
+            return error == null
+                ? Ok(new { success = true })
+                : BadRequest(new { success = false, message = error });
+        }
+
+        if (error == null)
+        {
+            TempData["CartSuccess"] = "Item added to cart.";
+        }
+        else
+        {
+            TempData["CartError"] = error;
         }
 
         return RedirectToAction(nameof(Index));

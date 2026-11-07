@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using MaleFashion.Application.Common.Exceptions;
+using MaleFashion.Application.Features.Orders.Commands.MarkOrderPaid;
 using MaleFashion.Application.Features.Orders.Commands.UpdateOrderStatus;
 using MaleFashion.Application.Features.Orders.Queries.GetOrderByIdAdmin;
 using MaleFashion.Application.Features.Orders.Queries.GetOrderList;
@@ -86,5 +87,27 @@ public class OrdersController : Controller
         }
 
         return RedirectToAction(nameof(Details), new { id = model.OrderId });
+    }
+
+   
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkPaid(int orderId)
+    {
+        try
+        {
+            await _mediator.Send(new MarkOrderPaidCommand { OrderId = orderId });
+            TempData["Success"] = "Payment verified. Order marked as paid.";
+        }
+        catch (ConflictException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
+
+        return RedirectToAction(nameof(Details), new { id = orderId });
     }
 }

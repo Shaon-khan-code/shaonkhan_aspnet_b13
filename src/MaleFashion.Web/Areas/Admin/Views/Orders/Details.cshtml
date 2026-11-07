@@ -16,6 +16,12 @@
     };
     var status = Convert.ToString(Model.Status) ?? string.Empty;
     var payment = Convert.ToString(Model.PaymentStatus) ?? string.Empty;
+    var method = Convert.ToString(Model.PaymentMethod) ?? string.Empty;
+
+    var isWallet = method.Equals("Bkash", StringComparison.OrdinalIgnoreCase)
+                   || method.Equals("Nagad", StringComparison.OrdinalIgnoreCase);
+    var awaitingVerification = isWallet && payment.Equals("Pending", StringComparison.OrdinalIgnoreCase)
+                               && !status.Equals("Cancelled", StringComparison.OrdinalIgnoreCase);
 }
 
 @if (TempData["Success"] is string successMessage)
@@ -78,6 +84,18 @@
                     <dd>@Model.CreatedAt.ToString("dd MMM yyyy, HH:mm", us)</dd>
                     <dt>Payment status</dt>
                     <dd><span class="badge bg-label-@StatusColor(payment)">@payment</span></dd>
+                    <dt>Payment method</dt>
+                    <dd>@method</dd>
+                    @if (!string.IsNullOrEmpty(Model.PaymentAccount))
+                    {
+                        <dt>Sender wallet number</dt>
+                        <dd>@Model.PaymentAccount</dd>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.PaymentReference))
+                    {
+                        <dt>Transaction ID (TrxID)</dt>
+                        <dd><code>@Model.PaymentReference</code></dd>
+                    }
                     <dt>Shipping address</dt>
                     <dd class="mb-0">
                         @Model.ShippingAddress.FullName<br />
@@ -94,6 +112,24 @@
                 </dl>
             </div>
         </div>
+
+        @if (awaitingVerification)
+        {
+            <div class="card mb-6 border border-warning">
+                <h5 class="card-header">Verify payment</h5>
+                <div class="card-body">
+                    <p class="small mb-3">
+                        Check your @method app for a payment of <strong>@Model.TotalAmount.ToString("C", us)</strong>
+                        with the TrxID above. Only confirm after you have received the money.
+                    </p>
+                    <form asp-action="MarkPaid" method="post"
+                          onsubmit="return confirm('Have you received this payment in your @method account?');">
+                        <input type="hidden" name="orderId" value="@Model.Id" />
+                        <button type="submit" class="btn btn-success">Mark as Paid</button>
+                    </form>
+                </div>
+            </div>
+        }
 
         <div class="card mb-6">
             <h5 class="card-header">Update status</h5>

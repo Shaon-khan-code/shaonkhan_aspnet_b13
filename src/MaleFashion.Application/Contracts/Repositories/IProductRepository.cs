@@ -17,6 +17,9 @@ public interface IProductRepository : IRepository<Product>
 
     Task<Product?> GetByIdWithCategoryAsync(int id);
 
+   
+    Task<Product?> GetByIdWithInventoryAsync(int id);
+
     Task<Product?> GetDetailsAsync(int id);
 
     Task<List<Product>> GetRelatedProductsAsync(int categoryId, int excludeProductId, int count);

@@ -1,4 +1,5 @@
 ﻿using MaleFashion.Application.Common.Exceptions;
+using MaleFashion.Application.Common.Helpers;
 using MaleFashion.Application.Contracts.Repositories;
 using MaleFashion.Application.Contracts.Services;
 using MaleFashion.Application.DTOs;
@@ -25,18 +26,25 @@ public class PlaceOrderCommandHandler : IRequestHandler<PlaceOrderCommand, Order
 
     public async Task<OrderDto> Handle(PlaceOrderCommand request, CancellationToken cancellationToken)
     {
-        var address = await _unitOfWork.Addresses.GetByIdAsync(request.ShippingAddressId)
-            ?? throw new NotFoundException(nameof(Address), request.ShippingAddressId);
+        Address? existingAddress = null;
 
-        // Ownership check (Security Fix #4): a customer/guest may only ship to
-        // their own saved address, never one belonging to someone else.
-        var ownsAddress =
-            (request.UserId != null && address.UserId == request.UserId) ||
-            (request.GuestId.HasValue && address.GuestId == request.GuestId);
-
-        if (!ownsAddress)
+        if (request.ShippingAddressId > 0)
         {
-            throw new NotFoundException(nameof(Address), request.ShippingAddressId);
+            existingAddress = await _unitOfWork.Addresses.GetByIdAsync(request.ShippingAddressId)
+                ?? throw new NotFoundException(nameof(Address), request.ShippingAddressId);
+
+            var ownsAddress =
+                (request.UserId != null && existingAddress.UserId == request.UserId) ||
+                (request.GuestId.HasValue && existingAddress.GuestId == request.GuestId);
+
+            if (!ownsAddress)
+            {
+                throw new NotFoundException(nameof(Address), request.ShippingAddressId);
+            }
+        }
+        else if (request.NewShippingAddress == null)
+        {
+            throw new ConflictException("A shipping address is required.");
         }
 
         var cart = await _unitOfWork.Carts.GetByOwnerAsync(request.UserId, request.GuestId);
@@ -57,11 +65,12 @@ public class PlaceOrderCommandHandler : IRequestHandler<PlaceOrderCommand, Order
 
         var totalAmount = cart.CartItems.Sum(ci => ci.UnitPrice * ci.Quantity);
 
-        var paymentResult = await _paymentService.ChargeAsync(request.Card, totalAmount, cancellationToken);
-        if (!paymentResult.Success)
-        {
-            throw new PaymentFailedException(paymentResult.FailureReason ?? "Payment was declined.");
-        }
+        var payment = await TakePaymentAsync(request, totalAmount, cancellationToken);
+
+        // শুধু Card এ সাথে সাথে পেমেন্ট নেওয়া হয় (simulated)।
+        // bKash/Nagad এ শুধু TrxID জমা নেওয়া হয়, Admin যাচাই না করা পর্যন্ত Pending থাকে।
+        var paidNow = request.PaymentMethod == PaymentMethod.Card;
+        var isWallet = request.PaymentMethod is PaymentMethod.Bkash or PaymentMethod.Nagad;
 
         await _unitOfWork.BeginTransactionAsync();
 
@@ -72,10 +81,30 @@ public class PlaceOrderCommandHandler : IRequestHandler<PlaceOrderCommand, Order
                 var available = item.Product.Inventory?.AvailableQuantity ?? 0;
                 if (item.Quantity > available)
                 {
-                    await _unitOfWork.RollbackTransactionAsync();
                     throw new ConflictException(
                         $"\"{item.Product.Name}\" only has {available} unit(s) available. Please update your cart.");
                 }
+            }
+
+            var address = existingAddress;
+            if (address == null)
+            {
+                var input = request.NewShippingAddress!;
+                address = new Address
+                {
+                    UserId = request.UserId,
+                    GuestId = request.GuestId,
+                    FullName = input.FullName.Trim(),
+                    Phone = input.Phone.Trim(),
+                    Line1 = input.Line1.Trim(),
+                    Line2 = string.IsNullOrWhiteSpace(input.Line2) ? null : input.Line2.Trim(),
+                    City = input.City.Trim(),
+                    State = string.IsNullOrWhiteSpace(input.State) ? null : input.State.Trim(),
+                    PostalCode = input.PostalCode.Trim(),
+                    Country = input.Country.Trim()
+                };
+
+                await _unitOfWork.Addresses.AddAsync(address);
             }
 
             var order = new Order
@@ -83,10 +112,13 @@ public class PlaceOrderCommandHandler : IRequestHandler<PlaceOrderCommand, Order
                 OrderNumber = GenerateOrderNumber(),
                 UserId = request.UserId,
                 GuestId = request.GuestId,
-                Status = OrderStatus.Processing,
-                PaymentStatus = PaymentStatus.Paid,
+                Status = paidNow ? OrderStatus.Processing : OrderStatus.Pending,
+                PaymentStatus = paidNow ? PaymentStatus.Paid : PaymentStatus.Pending,
+                PaymentMethod = request.PaymentMethod,
+                PaymentReference = payment?.TransactionId,
+                PaymentAccount = isWallet ? MobileWalletValidator.Normalize(request.WalletNumber) : null,
                 TotalAmount = totalAmount,
-                ShippingAddressId = address.Id,
+                ShippingAddressId = existingAddress?.Id ?? 0,
                 ShippingAddress = address,
                 CreatedAt = DateTime.UtcNow,
                 OrderItems = cart.CartItems.Select(ci => new OrderItem
@@ -118,6 +150,51 @@ public class PlaceOrderCommandHandler : IRequestHandler<PlaceOrderCommand, Order
         {
             await _unitOfWork.RollbackTransactionAsync();
             throw;
+        }
+    }
+
+    private async Task<PaymentResult?> TakePaymentAsync(
+        PlaceOrderCommand request, decimal totalAmount, CancellationToken cancellationToken)
+    {
+        switch (request.PaymentMethod)
+        {
+            case PaymentMethod.CashOnDelivery:
+                return null;
+
+            case PaymentMethod.Bkash:
+            case PaymentMethod.Nagad:
+                {
+                    var error = MobileWalletValidator.Validate(request.WalletNumber, request.TransactionId);
+                    if (error != null)
+                    {
+                        throw new PaymentFailedException(error);
+                    }
+
+                    var trxId = request.TransactionId!.Trim().ToUpperInvariant();
+
+                    // একই TrxID দিয়ে দুইবার অর্ডার ঠেকানো
+                    if (await _unitOfWork.Orders.PaymentReferenceExistsAsync(trxId))
+                    {
+                        throw new PaymentFailedException("This Transaction ID has already been used.");
+                    }
+
+                    return new PaymentResult
+                    {
+                        Success = true,
+                        TransactionId = trxId
+                    };
+                }
+
+            default:
+                {
+                    var result = await _paymentService.ChargeAsync(request.Card, totalAmount, cancellationToken);
+                    if (!result.Success)
+                    {
+                        throw new PaymentFailedException(result.FailureReason ?? "Payment was declined.");
+                    }
+
+                    return result;
+                }
         }
     }
 

@@ -70,5 +70,9 @@ public class OrderRepository : Repository<Order>, IOrderRepository
             .Take(count)
             .ToListAsync();
     }
+    public async Task<bool> PaymentReferenceExistsAsync(string paymentReference)
+    {
+        return await DbSet.AnyAsync(o => o.PaymentReference == paymentReference);
+    }
 
 }

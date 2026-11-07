@@ -240,6 +240,17 @@ namespace MaleFashion.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("PaymentAccount")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PaymentReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<int>("PaymentStatus")
                         .HasColumnType("int");
 

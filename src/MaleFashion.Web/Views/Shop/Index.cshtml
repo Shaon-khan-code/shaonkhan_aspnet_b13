@@ -1,4 +1,4 @@
-﻿```cshtml
+﻿@* ```cshtml
 @using System.Collections
 @using System.Globalization
 @using System.Text.RegularExpressions
@@ -594,3 +594,329 @@
     </div>
 </section>
 ```
+ *@
+
+
+@using System.Collections
+@using System.Globalization
+@using System.Text.RegularExpressions
+@using MaleFashion.Application.Features.Products.Queries.GetProductList
+@model MaleFashion.Web.ViewModels.Shop.ShopIndexViewModel
+@{
+    ViewData["Title"] = "Shop";
+
+    const int PageSize = 12;
+
+    var pr = Model.Products;
+    var items = (Prop(pr, "Items", "Data", "Results", "Products", "Records") as IEnumerable)?.Cast<object>().ToList()
+                ?? new List<object>();
+    var total = ToInt(Prop(pr, "TotalCount", "TotalItems", "TotalRecords", "Total"), items.Count);
+    var page = ToInt(Prop(pr, "PageNumber", "Page", "CurrentPage"), 1);
+    if (page < 1) { page = 1; }
+    var totalPages = ToInt(Prop(pr, "TotalPages"), (int)Math.Ceiling(total / (double)PageSize));
+    var from = total == 0 ? 0 : ((page - 1) * PageSize) + 1;
+    var to = total == 0 ? 0 : Math.Min(page * PageSize, total);
+
+    string PageUrl(int p) => Url.Action("Index", "Shop", new
+    {
+        searchTerm = Model.SearchTerm,
+        categoryId = Model.CategoryId,
+        minPrice = Model.MinPrice,
+        maxPrice = Model.MaxPrice,
+        sortBy = Model.SortBy,
+        pageNumber = p
+    })!;
+
+    string FilterUrl(int? cat, decimal? min, decimal? max) => Url.Action("Index", "Shop", new
+    {
+        searchTerm = Model.SearchTerm,
+        categoryId = cat,
+        minPrice = min,
+        maxPrice = max,
+        sortBy = Model.SortBy
+    })!;
+
+    var priceRanges = new (string Label, decimal? Min, decimal? Max)[]
+    {
+        ("All prices", null, null),
+        ("$0 - $50", 0, 50),
+        ("$50 - $100", 50, 100),
+        ("$100 - $150", 100, 150),
+        ("$150 - $200", 150, 200),
+        ("$200+", 200, null)
+    };
+}
+
+@functions {
+    static object? Prop(object? o, params string[] names)
+    {
+        if (o == null) return null;
+        var t = o.GetType();
+        foreach (var n in names)
+        {
+            var p = t.GetProperty(n);
+            if (p != null) return p.GetValue(o);
+        }
+        return null;
+    }
+
+    static int ToInt(object? o, int fallback)
+    {
+        if (o == null) return fallback;
+        try { return Convert.ToInt32(o, CultureInfo.InvariantCulture); } catch { return fallback; }
+    }
+
+    static decimal? ToDec(object? o)
+    {
+        if (o == null) return null;
+        try { return Convert.ToDecimal(o, CultureInfo.InvariantCulture); } catch { return null; }
+    }
+
+    static string Money(decimal d) => "$" + d.ToString("0.00", CultureInfo.InvariantCulture);
+
+    static string Inv(decimal? d) => d?.ToString(CultureInfo.InvariantCulture) ?? "";
+
+    string Img(object? raw)
+    {
+        var s = raw?.ToString()?.Trim();
+        if (string.IsNullOrEmpty(s)) return Url.Content("~/storefront/img/no-image.svg");
+        if (s.StartsWith("http", StringComparison.OrdinalIgnoreCase)) return s;
+        if (s.StartsWith("~/")) return Url.Content(s);
+        if (s.StartsWith("/")) return s;
+        if (s.StartsWith("img/", StringComparison.OrdinalIgnoreCase)) return "/storefront/" + s;
+        // স্ল্যাশসহ অজানা key (যেমন S3-র products/...) ব্যাকএন্ডে URL হয়ে আসার কথা, না এলে প্লেসহোল্ডার
+        if (s.Contains('/')) return Url.Content("~/storefront/img/no-image.svg");
+        return "/storefront/img/product/" + s;
+    }
+
+    static string SortLabel(string name) => Regex.Replace(name, "(?<=[a-z])(?=[A-Z])", " ");
+}
+
+<style>
+    .dz-card { background: #fff; border-radius: 8px; overflow: hidden; height: 100%; display: flex; flex-direction: column;
+               box-shadow: 0 2px 10px rgba(0,0,0,.07); transition: transform .2s, box-shadow .2s; }
+    .dz-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,.12); }
+    .dz-pic { position: relative; display: block; aspect-ratio: 1 / 1; background: #f3f2ee; }
+    .dz-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .dz-badge { position: absolute; top: 8px; right: 8px; background: linear-gradient(90deg, #ff5f6d, #e53637); color: #fff;
+                font-weight: 700; font-size: 14px; padding: 3px 10px; border-radius: 14px; }
+    .dz-body { padding: 14px 14px 16px; display: flex; flex-direction: column; flex: 1; }
+    .dz-cat { font-size: 12px; color: #999; margin-bottom: 4px; }
+    .dz-name { margin: 0 0 8px; font-size: 15px; font-weight: 500; line-height: 1.4; min-height: 42px;
+               display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .dz-name a { color: #222; }
+    .dz-price { margin-bottom: 12px; }
+    .dz-price .now { font-size: 20px; font-weight: 800; color: #e53637; }
+    .dz-price .was { font-size: 14px; color: #999; text-decoration: line-through; margin-left: 8px; }
+    .dz-shop { margin-top: auto; display: block; text-align: center; background: #e53637; color: #fff;
+               font-weight: 700; padding: 11px 0; border-radius: 4px; }
+    .dz-shop:hover { background: #111; color: #fff; }
+</style>
+
+<!-- Breadcrumb Section Begin -->
+<section class="breadcrumb-option">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="breadcrumb__text">
+                    <h4>Shop</h4>
+                    <div class="breadcrumb__links">
+                        <a asp-controller="Home" asp-action="Index">Home</a>
+                        <span>Shop</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Breadcrumb Section End -->
+
+<!-- Shop Section Begin -->
+<section class="shop spad">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-3">
+                <div class="shop__sidebar">
+                    <div class="shop__sidebar__search">
+                        <form asp-controller="Shop" asp-action="Index" method="get">
+                            <input type="text" name="searchTerm" value="@Model.SearchTerm" placeholder="Search...">
+                            @if (Model.CategoryId.HasValue) { <input type="hidden" name="categoryId" value="@Model.CategoryId" /> }
+                            @if (Model.MinPrice.HasValue) { <input type="hidden" name="minPrice" value="@Inv(Model.MinPrice)" /> }
+                            @if (Model.MaxPrice.HasValue) { <input type="hidden" name="maxPrice" value="@Inv(Model.MaxPrice)" /> }
+                            <input type="hidden" name="sortBy" value="@Model.SortBy" />
+                            <button type="submit"><span class="icon_search"></span></button>
+                        </form>
+                    </div>
+
+                    <div class="shop__sidebar__accordion">
+                        <div class="accordion" id="accordionExample">
+                            <div class="card">
+                                <div class="card-heading">
+                                    <a data-toggle="collapse" data-target="#collapseOne">Categories</a>
+                                </div>
+                                <div id="collapseOne" class="collapse show" data-parent="#accordionExample">
+                                    <div class="card-body">
+                                        <div class="shop__sidebar__categories">
+                                            <ul class="nice-scroll">
+                                                <li>
+                                                    <a href="@FilterUrl(null, Model.MinPrice, Model.MaxPrice)"
+                                                       style="@(Model.CategoryId == null ? "color:#111;font-weight:700;" : "")">All</a>
+                                                </li>
+                                                @foreach (var c in Model.CategoryOptions)
+                                                {
+                                                    int.TryParse(c.Value, out var cid);
+                                                    <li>
+                                                        <a href="@FilterUrl(cid, Model.MinPrice, Model.MaxPrice)"
+                                                           style="@(Model.CategoryId == cid ? "color:#111;font-weight:700;" : "")">@c.Text</a>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-heading">
+                                    <a data-toggle="collapse" data-target="#collapseThree">Filter Price</a>
+                                </div>
+                                <div id="collapseThree" class="collapse show" data-parent="#accordionExample">
+                                    <div class="card-body">
+                                        <div class="shop__sidebar__price">
+                                            <ul>
+                                                @foreach (var r in priceRanges)
+                                                {
+                                                    var selected = Model.MinPrice == r.Min && Model.MaxPrice == r.Max;
+                                                    <li>
+                                                        <a href="@FilterUrl(Model.CategoryId, r.Min, r.Max)"
+                                                           style="@(selected ? "color:#111;font-weight:700;" : "")">@r.Label</a>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || Model.CategoryId.HasValue || Model.MinPrice.HasValue || Model.MaxPrice.HasValue)
+                    {
+                        <p class="mt-3"><a asp-controller="Shop" asp-action="Index" style="color:#e53637;font-weight:600;">&times; Clear all filters</a></p>
+                    }
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="shop__product__option">
+                    <div class="row">
+                        <div class="col-lg-6 col-md-6 col-sm-6">
+                            <div class="shop__product__option__left">
+                                <p>Showing @from–@to of @total results</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 col-md-6 col-sm-6">
+                            <div class="shop__product__option__right">
+                                <form asp-controller="Shop" asp-action="Index" method="get">
+                                    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm)) { <input type="hidden" name="searchTerm" value="@Model.SearchTerm" /> }
+                                    @if (Model.CategoryId.HasValue) { <input type="hidden" name="categoryId" value="@Model.CategoryId" /> }
+                                    @if (Model.MinPrice.HasValue) { <input type="hidden" name="minPrice" value="@Inv(Model.MinPrice)" /> }
+                                    @if (Model.MaxPrice.HasValue) { <input type="hidden" name="maxPrice" value="@Inv(Model.MaxPrice)" /> }
+                                    <p>Sort by:</p>
+                                    <select name="sortBy" onchange="this.form.submit()">
+                                        @foreach (var opt in Enum.GetValues<ProductSortOption>())
+                                        {
+                                            <option value="@opt" selected="@(opt == Model.SortBy)">@SortLabel(opt.ToString())</option>
+                                        }
+                                    </select>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (items.Count == 0)
+                {
+                    <div class="text-center py-5">
+                        <h5>No products found</h5>
+                        <p>Try changing your search or filters.</p>
+                        <a asp-controller="Shop" asp-action="Index" class="primary-btn">View all products</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="row">
+                        @foreach (var p in items)
+                        {
+                            var name = Prop(p, "Name", "ProductName", "Title")?.ToString() ?? "";
+                            var price = ToDec(Prop(p, "Price", "UnitPrice", "BasePrice")) ?? 0m;
+                            var discount = ToDec(Prop(p, "DiscountPrice", "SalePrice", "DiscountedPrice"));
+                            var onSaleFlag = Prop(p, "IsOnSale", "OnSale") as bool?;
+                            var onSale = onSaleFlag == true || (discount.HasValue && discount > 0 && discount < price);
+                            var image = Img(Prop(p, "ImageUrl", "ImageKey", "ImagePath", "MainImageUrl", "PrimaryImageUrl", "ThumbnailUrl", "Image"));
+                            var rating = ToDec(Prop(p, "AverageRating", "Rating")) ?? 0m;
+                            var category = Prop(p, "CategoryName", "Category")?.ToString();
+                            var productId = ToInt(Prop(p, "Id", "ProductId"), 0);
+
+                            <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
+                                <div class="dz-card">
+                                    <a class="dz-pic" asp-controller="Shop" asp-action="Details" asp-route-id="@productId">
+                                        <img src="@image" alt="@name" loading="lazy"
+                                             onerror="this.onerror=null;this.src='/storefront/img/no-image.svg';" />
+                                        @if (onSale && discount.HasValue && discount > 0 && price > 0)
+                                        {
+                                            <span class="dz-badge">-@((int)Math.Round((price - discount.Value) / price * 100m))%</span>
+                                        }
+                                    </a>
+                                    <div class="dz-body">
+                                        @if (!string.IsNullOrEmpty(category))
+                                        {
+                                            <span class="dz-cat">@category</span>
+                                        }
+                                        <h6 class="dz-name"><a asp-controller="Shop" asp-action="Details" asp-route-id="@productId">@name</a></h6>
+                                        <div class="dz-price">
+                                            @if (onSale && discount.HasValue && discount > 0)
+                                            {
+                                                <span class="now">@Money(discount.Value)</span>
+                                                <span class="was">@Money(price)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="now">@Money(price)</span>
+                                            }
+                                        </div>
+                                        <a class="dz-shop" asp-controller="Shop" asp-action="Details" asp-route-id="@productId">Shop now</a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    @if (totalPages > 1)
+                    {
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="product__pagination">
+                                    @if (page > 1) { <a href="@PageUrl(page - 1)">&laquo;</a> }
+                                    @for (var i = 1; i <= totalPages; i++)
+                                    {
+                                        if (i == 1 || i == totalPages || Math.Abs(i - page) <= 2)
+                                        {
+                                            <a class="@(i == page ? "active" : "")" href="@PageUrl(i)">@i</a>
+                                        }
+                                        else if (Math.Abs(i - page) == 3)
+                                        {
+                                            <span>...</span>
+                                        }
+                                    }
+                                    @if (page < totalPages) { <a href="@PageUrl(page + 1)">&raquo;</a> }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Shop Section End -->

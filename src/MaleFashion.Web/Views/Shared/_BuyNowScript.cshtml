@@ -1,0 +1,43 @@
+﻿<script>
+    (function () {
+        var checkoutUrl = '@Url.Action("Index", "Checkout")';
+
+        document.addEventListener('click', function (event) {
+            var button = event.target.closest('[data-buy-now]');
+            if (!button) { return; }
+
+            var form = button.closest('form');
+            if (!form) { return; }
+
+            event.preventDefault();
+
+            var original = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Please wait...';
+
+            fetch(form.getAttribute('action'), {
+                method: 'POST',
+                body: new FormData(form),
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(function (response) {
+                    return response.json()
+                        .catch(function () { return {}; })
+                        .then(function (data) {
+                            if (!response.ok || data.success === false) {
+                                throw new Error(data.message || 'add-to-cart-failed');
+                            }
+                            window.location.href = checkoutUrl;
+                        });
+                })
+                .catch(function (err) {
+                    button.disabled = false;
+                    button.textContent = original;
+                    alert(err.message && err.message !== 'add-to-cart-failed'
+                        ? err.message
+                        : 'Could not start checkout. Please try again.');
+                });
+        });
+    })();
+</script>

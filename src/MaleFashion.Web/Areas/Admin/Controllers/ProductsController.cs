@@ -96,6 +96,8 @@ public class ProductsController : Controller
                 DiscountPrice = model.DiscountPrice,
                 IsActive = model.IsActive,
                 CategoryId = model.CategoryId,
+                InitialStock = model.InitialStock,
+                ReorderLevel = model.ReorderLevel,
 
                 ImageStream = image.Stream,
                 ImageFileName = image.FileName,
@@ -128,7 +130,7 @@ public class ProductsController : Controller
         }
         catch (InvalidOperationException ex)
         {
-            // ছবি বৈধ নয়, অথবা AWS S3 কনফিগ নেই
+           
             _logger.LogWarning(ex, "Product image could not be uploaded.");
             ModelState.AddModelError(nameof(model.ImageFile), ex.Message);
         }
@@ -205,7 +207,7 @@ public class ProductsController : Controller
                 IsActive = model.IsActive,
                 CategoryId = model.CategoryId,
 
-                // আগে এখানে ছবি পাঠানো হত না, তাই "Replace Image" কাজ করত না
+                
                 ImageStream = image.Stream,
                 ImageFileName = image.FileName,
                 ImageContentType = image.ContentType
@@ -296,7 +298,6 @@ public class ProductsController : Controller
         }
     }
 
-    /// <summary>ফর্ম আবার দেখানোর আগে ক্যাটাগরির তালিকা ও (Edit-এ) বর্তমান ছবি ভরে।</summary>
     private async Task PopulateAsync(ProductFormViewModel model)
     {
         model.CategoryOptions = await GetCategoryOptionsAsync();
@@ -312,7 +313,7 @@ public class ProductsController : Controller
             }
             catch (NotFoundException)
             {
-                // প্রোডাক্ট ইতিমধ্যে মুছে গেছে, বর্তমান ছবি দেখানোর দরকার নেই
+                
             }
         }
     }
@@ -331,7 +332,7 @@ public class ProductsController : Controller
             .ToList();
     }
 
-    /// <summary>AWS SDK-এর কোনো এরর (যেমন ক্রেডেনশিয়াল নেই, বাকেট ভুল) হলে true।</summary>
+    
     private static bool IsStorageError(Exception ex)
     {
         for (var current = ex; current != null; current = current.InnerException!)
@@ -351,7 +352,7 @@ public class ProductsController : Controller
         return false;
     }
 
-    /// <summary>ডেটাবেসের unique নিয়ম (Slug বা SKU) ভাঙলে true।</summary>
+
     private static bool IsDuplicateKey(Exception ex)
     {
         for (var current = ex; current != null; current = current.InnerException!)
